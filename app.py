@@ -25,6 +25,25 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 # Create uploads folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Brand and Model data
+BRANDS_MODELS = {
+    'Michelin': [
+        'Pilot Sport 4',
+        'Pilot Sport 5',
+        'Primacy 4',
+        'CrossClimate 2'
+    ],
+    'Continental': [
+        'PremiumContact 6',
+        'EcoContact 6',
+        'SportContact 7'
+    ],
+    'Goodyear': [
+        'Eagle F1',
+        'EfficientGrip'
+    ]
+}
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -206,7 +225,14 @@ def index():
     """Main page with the product creation form"""
     collections = get_collections()
     next_sku = get_next_sku()
-    return render_template('index.html', collections=collections, next_sku=next_sku)
+    return render_template('index.html', collections=collections, next_sku=next_sku, brands_models=BRANDS_MODELS)
+
+
+@app.route('/api/get-models/<brand>')
+def get_models(brand):
+    """Return models for a specific brand"""
+    models = BRANDS_MODELS.get(brand, [])
+    return jsonify(models)
 
 
 @app.route('/create-product', methods=['POST'])

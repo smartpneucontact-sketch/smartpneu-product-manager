@@ -207,12 +207,17 @@ def create_product(product_data, images=None):
         })
     
     if product_data.get('tread_depth'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'tread_depth',
-            'value': product_data['tread_depth'],
-            'type': 'single_line_text_field'
-        })
+        # Remove "mm" and convert to decimal
+        tread_value = product_data['tread_depth'].replace('mm', '').replace(' ', '').strip()
+        try:
+            product['product']['metafields'].append({
+                'namespace': 'custom',
+                'key': 'tread_depth',
+                'value': str(float(tread_value)),
+                'type': 'number_decimal'
+            })
+        except ValueError:
+            pass  # Skip if not a valid number
     
     if product_data.get('price_difference_to_new'):
         product['product']['metafields'].append({
@@ -239,26 +244,21 @@ def create_product(product_data, images=None):
         })
     
     if product_data.get('load_index'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'load_index',
-            'value': product_data['load_index'],
-            'type': 'single_line_text_field'
-        })
+        try:
+            product['product']['metafields'].append({
+                'namespace': 'custom',
+                'key': 'load_index',
+                'value': int(product_data['load_index']),
+                'type': 'number_integer'
+            })
+        except ValueError:
+            pass  # Skip if not a valid number
     
     if product_data.get('speed_index'):
         product['product']['metafields'].append({
             'namespace': 'custom',
             'key': 'speed_index',
             'value': product_data['speed_index'],
-            'type': 'single_line_text_field'
-        })
-    
-    if product_data.get('item_condition'):
-        product['product']['metafields'].append({
-            'namespace': 'shopify',
-            'key': 'item-condition',
-            'value': product_data['item_condition'],
             'type': 'single_line_text_field'
         })
     

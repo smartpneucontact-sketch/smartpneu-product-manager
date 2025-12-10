@@ -298,6 +298,10 @@ def create_product(product_data, images=None):
                 if collection_id:
                     add_to_collection(product_id, collection_id)
         
+        # Publish to all sales channels (Online Store, Shop, POS, Inbox)
+        if product_id:
+            publish_to_sales_channels(product_id)
+        
         return {'success': True, 'product': created_product}
     else:
         return {'success': False, 'error': response.json()}
@@ -314,6 +318,31 @@ def add_to_collection(product_id, collection_id):
     }
     response = requests.post(url, headers=get_shopify_headers(), json=data)
     return response.status_code in [200, 201]
+
+
+def publish_to_sales_channels(product_id):
+    """Publish product to all sales channels (Online Store, Shop, POS, Inbox)"""
+    # First, get all available publications (sales channels)
+    url = get_shopify_url('publications.json')
+    response = requests.get(url, headers=get_shopify_headers())
+    
+    if response.status_code != 200:
+        return False
+    
+    publications = response.json().get('publications', [])
+    
+    # Publish to each sales channel
+    for pub in publications:
+        pub_id = pub.get('id')
+        url = get_shopify_url(f'publications/{pub_id}/product_listings.json')
+        data = {
+            'product_listing': {
+                'product_id': product_id
+            }
+        }
+        requests.post(url, headers=get_shopify_headers(), json=data)
+    
+    return True
 
 
 @app.route('/')

@@ -175,12 +175,17 @@ def create_product(product_data, images=None):
         })
     
     if product_data.get('rayon'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'rayon',
-            'value': product_data['rayon'],
-            'type': 'single_line_text_field'
-        })
+        # Extract number from rayon (e.g., "R17" -> 17)
+        rayon_value = product_data['rayon'].replace('R', '').replace('r', '').strip()
+        try:
+            product['product']['metafields'].append({
+                'namespace': 'custom',
+                'key': 'rayon',
+                'value': int(rayon_value),
+                'type': 'number_integer'
+            })
+        except ValueError:
+            pass
     
     if product_data.get('model'):
         product['product']['metafields'].append({
@@ -220,12 +225,15 @@ def create_product(product_data, images=None):
             pass  # Skip if not a valid number
     
     if product_data.get('price_difference_to_new'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'price_difference_to_new',
-            'value': int(product_data['price_difference_to_new']),
-            'type': 'number_integer'
-        })
+        try:
+            product['product']['metafields'].append({
+                'namespace': 'custom',
+                'key': 'price_difference_to_new',
+                'value': int(product_data['price_difference_to_new']),
+                'type': 'number_integer'
+            })
+        except ValueError:
+            pass
     
     if product_data.get('dot'):
         product['product']['metafields'].append({

@@ -142,6 +142,7 @@ def create_product(product_data, images=None):
             'body_html': product_data.get('description', ''),
             'vendor': product_data.get('vendor', ''),
             'product_type': product_data.get('product_type', 'Pneu d\'été'),
+            'product_category': {'product_taxonomy_node_id': 'gid://shopify/ProductTaxonomyNode/552'},
             'status': product_data.get('status', 'draft'),
             'variants': [
                 {

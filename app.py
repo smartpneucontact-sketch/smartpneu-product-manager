@@ -262,6 +262,14 @@ def create_product(product_data, images=None):
             'type': 'single_line_text_field'
         })
     
+    if product_data.get('arrival_date'):
+        product['product']['metafields'].append({
+            'namespace': 'custom',
+            'key': 'arrival_date',
+            'value': product_data['arrival_date'],
+            'type': 'date'
+        })
+    
     # Create the product
     response = requests.post(url, headers=get_shopify_headers(), json=product)
     
@@ -343,7 +351,8 @@ def create_product_route():
             'tire_provider': request.form.get('tire_provider', ''),
             'load_index': request.form.get('load_index', ''),
             'speed_index': request.form.get('speed_index', ''),
-            'item_condition': request.form.get('item_condition', '')
+            'item_condition': request.form.get('item_condition', 'Occasion certifiée'),
+            'arrival_date': request.form.get('arrival_date', '')
         }
         
         # Handle image uploads

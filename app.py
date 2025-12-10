@@ -1,4 +1,5 @@
 import os
+import json
 from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
 import requests
 from werkzeug.utils import secure_filename
@@ -25,24 +26,13 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 # Create uploads folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Brand and Model data
-BRANDS_MODELS = {
-    'Michelin': [
-        'Pilot Sport 4',
-        'Pilot Sport 5',
-        'Primacy 4',
-        'CrossClimate 2'
-    ],
-    'Continental': [
-        'PremiumContact 6',
-        'EcoContact 6',
-        'SportContact 7'
-    ],
-    'Goodyear': [
-        'Eagle F1',
-        'EfficientGrip'
-    ]
-}
+# Load Brand and Model data from JSON file
+def load_brands_models():
+    json_path = os.path.join(os.path.dirname(__file__), 'brands_models.json')
+    with open(json_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+BRANDS_MODELS = load_brands_models()
 
 
 def allowed_file(filename):

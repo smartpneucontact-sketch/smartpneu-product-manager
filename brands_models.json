@@ -1,0 +1,17 @@
+{
+    "Michelin": [
+        "Pilot Sport 4",
+        "Pilot Sport 5",
+        "Primacy 4",
+        "CrossClimate 2"
+    ],
+    "Continental": [
+        "PremiumContact 6",
+        "EcoContact 6",
+        "SportContact 7"
+    ],
+    "Goodyear": [
+        "Eagle F1",
+        "EfficientGrip"
+    ]
+}

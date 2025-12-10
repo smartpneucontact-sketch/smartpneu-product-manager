@@ -32,7 +32,14 @@ def load_brands_models():
     with open(json_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
+# Load default description from text file
+def load_default_description():
+    txt_path = os.path.join(os.path.dirname(__file__), 'default_description.txt')
+    with open(txt_path, 'r', encoding='utf-8') as f:
+        return f.read()
+
 BRANDS_MODELS = load_brands_models()
+DEFAULT_DESCRIPTION = load_default_description()
 
 
 def allowed_file(filename):
@@ -215,7 +222,7 @@ def index():
     """Main page with the product creation form"""
     collections = get_collections()
     next_sku = get_next_sku()
-    return render_template('index.html', collections=collections, next_sku=next_sku, brands_models=BRANDS_MODELS)
+    return render_template('index.html', collections=collections, next_sku=next_sku, brands_models=BRANDS_MODELS, default_description=DEFAULT_DESCRIPTION)
 
 
 @app.route('/api/get-models/<brand>')

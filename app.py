@@ -141,16 +141,15 @@ def create_product(product_data, images=None):
             'title': product_data['title'],
             'body_html': product_data.get('description', ''),
             'vendor': product_data.get('vendor', ''),
-            'product_type': product_data.get('product_type', 'Tire'),
+            'product_type': product_data.get('product_type', 'Pneu d\'été'),
             'status': product_data.get('status', 'draft'),
             'variants': [
                 {
                     'price': product_data.get('price', '0.00'),
-                    'compare_at_price': product_data.get('compare_at_price') or None,
                     'sku': product_data.get('sku', ''),
                     'barcode': product_data.get('barcode', ''),
                     'inventory_management': 'shopify',
-                    'inventory_quantity': int(product_data.get('inventory_quantity', 0)),
+                    'inventory_quantity': int(product_data.get('inventory_quantity', 1)),
                     'requires_shipping': True
                 }
             ],
@@ -195,9 +194,12 @@ def create_product(product_data, images=None):
             for image_path in images:
                 upload_image_to_shopify(product_id, image_path)
         
-        # Add to collection if specified
-        if product_data.get('collection_id') and product_id:
-            add_to_collection(product_id, product_data['collection_id'])
+        # Add to collections if specified
+        collection_ids = product_data.get('collection_ids', [])
+        if collection_ids and product_id:
+            for collection_id in collection_ids:
+                if collection_id:
+                    add_to_collection(product_id, collection_id)
         
         return {'success': True, 'product': created_product}
     else:
@@ -241,16 +243,16 @@ def create_product_route():
             'title': request.form.get('title'),
             'description': request.form.get('description'),
             'price': request.form.get('price'),
-            'compare_at_price': request.form.get('compare_at_price'),
             'sku': request.form.get('sku'),
             'barcode': request.form.get('barcode'),
             'vendor': request.form.get('vendor'),
-            'product_type': request.form.get('product_type', 'Tire'),
-            'inventory_quantity': request.form.get('inventory_quantity', 0),
+            'model': request.form.get('model'),
+            'product_type': request.form.get('product_type', 'Pneu d\'été'),
+            'inventory_quantity': request.form.get('inventory_quantity', 1),
             'largeur': request.form.get('largeur'),
             'hauteur': request.form.get('hauteur'),
             'rayon': request.form.get('rayon'),
-            'collection_id': request.form.get('collection_id'),
+            'collection_ids': request.form.getlist('collection_ids'),
             'status': request.form.get('status', 'draft')
         }
         

@@ -228,6 +228,10 @@
             border-radius: 0 8px 8px 0;
         }
 
+        .form-group select[multiple] {
+            min-height: 120px;
+        }
+
         .help-text {
             font-size: 0.75rem;
             color: #6b7280;
@@ -336,9 +340,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="product_type">Product Type</label>
-                        <input type="text" id="product_type" name="product_type" 
-                               value="Tire" placeholder="e.g., Tire">
+                        <label for="product_type">Product Type <span class="required">*</span></label>
+                        <select id="product_type" name="product_type" required>
+                            <option value="">-- Select Type --</option>
+                            <option value="Pneu d'été">Pneu d'été</option>
+                            <option value="Pneu hiver">Pneu hiver</option>
+                            <option value="Pneus 4 saisons">Pneus 4 saisons</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
@@ -349,14 +357,14 @@
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label for="collection_id">Collection</label>
-                        <select id="collection_id" name="collection_id">
-                            <option value="">-- No Collection --</option>
+                    <div class="form-group full-width">
+                        <label for="collection_ids">Collections</label>
+                        <select id="collection_ids" name="collection_ids" multiple>
                             {% for collection in collections %}
                                 <option value="{{ collection.id }}">{{ collection.title }}</option>
                             {% endfor %}
                         </select>
+                        <span class="help-text">Hold Ctrl (Cmd on Mac) to select multiple collections</span>
                     </div>
                 </div>
             </div>
@@ -395,20 +403,16 @@
                     <div class="form-group">
                         <label for="price">Price <span class="required">*</span></label>
                         <div class="input-group">
-                            <span class="input-prefix">MAD</span>
+                            <span class="input-prefix">€</span>
                             <input type="number" id="price" name="price" required 
                                    step="0.01" min="0" placeholder="0.00">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="compare_at_price">Compare at Price</label>
-                        <div class="input-group">
-                            <span class="input-prefix">MAD</span>
-                            <input type="number" id="compare_at_price" name="compare_at_price" 
-                                   step="0.01" min="0" placeholder="0.00">
-                        </div>
-                        <span class="help-text">Original price (for showing discounts)</span>
+                        <label for="inventory_quantity">Inventory Quantity</label>
+                        <input type="number" id="inventory_quantity" name="inventory_quantity" 
+                               value="1" min="0">
                     </div>
 
                     <div class="form-group">
@@ -422,12 +426,6 @@
                         <label for="barcode">Barcode (EAN/UPC)</label>
                         <input type="text" id="barcode" name="barcode" 
                                placeholder="e.g., 3528700123456">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="inventory_quantity">Inventory Quantity</label>
-                        <input type="number" id="inventory_quantity" name="inventory_quantity" 
-                               value="0" min="0">
                     </div>
                 </div>
             </div>

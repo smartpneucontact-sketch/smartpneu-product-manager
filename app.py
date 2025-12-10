@@ -32,10 +32,10 @@ def load_brands_models():
     with open(json_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
-# Load default description from text file
+# Load default description from HTML file
 def load_default_description():
-    txt_path = os.path.join(os.path.dirname(__file__), 'default_description.txt')
-    with open(txt_path, 'r', encoding='utf-8') as f:
+    html_path = os.path.join(os.path.dirname(__file__), 'default_description.html')
+    with open(html_path, 'r', encoding='utf-8') as f:
         return f.read()
 
 BRANDS_MODELS = load_brands_models()

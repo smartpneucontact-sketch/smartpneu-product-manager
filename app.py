@@ -321,26 +321,60 @@ def add_to_collection(product_id, collection_id):
 
 
 def publish_to_sales_channels(product_id):
-    """Publish product to all sales channels (Online Store, Shop, POS, Inbox)"""
-    # First, get all available publications (sales channels)
-    url = get_shopify_url('publications.json')
-    response = requests.get(url, headers=get_shopify_headers())
+    """Publish product to all sales channels using GraphQL"""
+    # GraphQL endpoint
+    url = f"https://{SHOPIFY_STORE}.myshopify.com/admin/api/{SHOPIFY_API_VERSION}/graphql.json"
+    
+    # First, get all publications
+    query = """
+    {
+        publications(first: 20) {
+            edges {
+                node {
+                    id
+                    name
+                }
+            }
+        }
+    }
+    """
+    
+    response = requests.post(url, headers=get_shopify_headers(), json={'query': query})
     
     if response.status_code != 200:
         return False
     
-    publications = response.json().get('publications', [])
+    data = response.json()
+    publications = data.get('data', {}).get('publications', {}).get('edges', [])
     
-    # Publish to each sales channel
+    # Publish to each channel
+    product_gid = f"gid://shopify/Product/{product_id}"
+    
     for pub in publications:
-        pub_id = pub.get('id')
-        url = get_shopify_url(f'publications/{pub_id}/product_listings.json')
-        data = {
-            'product_listing': {
-                'product_id': product_id
+        pub_id = pub['node']['id']
+        
+        mutation = """
+        mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
+            publishablePublish(id: $id, input: $input) {
+                publishable {
+                    availablePublicationsCount {
+                        count
+                    }
+                }
+                userErrors {
+                    field
+                    message
+                }
             }
         }
-        requests.post(url, headers=get_shopify_headers(), json=data)
+        """
+        
+        variables = {
+            "id": product_gid,
+            "input": [{"publicationId": pub_id}]
+        }
+        
+        requests.post(url, headers=get_shopify_headers(), json={'query': mutation, 'variables': variables})
     
     return True
 

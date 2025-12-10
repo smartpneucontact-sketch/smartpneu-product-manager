@@ -407,7 +407,7 @@
             <!-- Tire Specifications -->
             <div class="card">
                 <h2 class="card-title">Tire Specifications</h2>
-                <div class="tire-specs">
+                <div class="form-grid">
                     <div class="form-group">
                         <label for="largeur">Largeur (Width)</label>
                         <input type="number" id="largeur" name="largeur" 
@@ -427,6 +427,79 @@
                         <input type="text" id="rayon" name="rayon" 
                                placeholder="R17">
                         <span class="help-text">Rim diameter (e.g., R17)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="load_index">Load Index</label>
+                        <input type="text" id="load_index" name="load_index" 
+                               placeholder="91">
+                        <span class="help-text">e.g., 91</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="speed_index">Speed Index</label>
+                        <input type="text" id="speed_index" name="speed_index" 
+                               placeholder="V">
+                        <span class="help-text">e.g., V, W, Y</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dot">DOT</label>
+                        <input type="text" id="dot" name="dot" 
+                               placeholder="10 / 25">
+                        <span class="help-text">Week / Year (e.g., 10 / 25)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tire_count">Tire Count</label>
+                        <select id="tire_count" name="tire_count">
+                            <option value="1">1</option>
+                            <option value="2" selected>2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commercial_tire">Commercial Tire</label>
+                        <select id="commercial_tire" name="commercial_tire">
+                            <option value="">Non</option>
+                            <option value="C">C</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tire_provider">Tire Provider</label>
+                        <input type="text" id="tire_provider" name="tire_provider" 
+                               placeholder="Provider name">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Used Tire Details -->
+            <div class="card">
+                <h2 class="card-title">Used Tire Details</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="item_condition">Condition</label>
+                        <select id="item_condition" name="item_condition">
+                            <option value="">-- Select --</option>
+                            <option value="Occasion certifiée">Occasion certifiée</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tread_depth">Tread Depth</label>
+                        <input type="text" id="tread_depth" name="tread_depth" 
+                               placeholder="8.26 mm">
+                        <span class="help-text">e.g., 8.26 mm</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="price_difference_to_new">Price Difference to New (%)</label>
+                        <input type="number" id="price_difference_to_new" name="price_difference_to_new" 
+                               placeholder="30" min="1" max="100">
+                        <span class="help-text">1-100%</span>
                     </div>
                 </div>
             </div>

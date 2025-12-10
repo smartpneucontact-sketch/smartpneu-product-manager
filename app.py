@@ -182,6 +182,86 @@ def create_product(product_data, images=None):
             'type': 'single_line_text_field'
         })
     
+    if product_data.get('model'):
+        product['product']['metafields'].append({
+            'namespace': 'custom',
+            'key': 'model',
+            'value': product_data['model'],
+            'type': 'single_line_text_field'
+        })
+    
+    if product_data.get('tire_count'):
+        product['product']['metafields'].append({
+            'namespace': 'custom',
+            'key': 'tire_count',
+            'value': int(product_data['tire_count']),
+            'type': 'number_integer'
+        })
+    
+    if product_data.get('commercial_tire'):
+        product['product']['metafields'].append({
+            'namespace': 'custom',
+            'key': 'commercial_tire',
+            'value': product_data['commercial_tire'],
+            'type': 'single_line_text_field'
+        })
+    
+    if product_data.get('tread_depth'):
+        product['product']['metafields'].append({
+            'namespace': 'custom',
+            'key': 'tread_depth',
+            'value': product_data['tread_depth'],
+            'type': 'single_line_text_field'
+        })
+    
+    if product_data.get('price_difference_to_new'):
+        product['product']['metafields'].append({
+            'namespace': 'custom',
+            'key': 'price_difference_to_new',
+            'value': int(product_data['price_difference_to_new']),
+            'type': 'number_integer'
+        })
+    
+    if product_data.get('dot'):
+        product['product']['metafields'].append({
+            'namespace': 'custom',
+            'key': 'dot',
+            'value': product_data['dot'],
+            'type': 'single_line_text_field'
+        })
+    
+    if product_data.get('tire_provider'):
+        product['product']['metafields'].append({
+            'namespace': 'custom',
+            'key': 'tire_provider',
+            'value': product_data['tire_provider'],
+            'type': 'single_line_text_field'
+        })
+    
+    if product_data.get('load_index'):
+        product['product']['metafields'].append({
+            'namespace': 'custom',
+            'key': 'load_index',
+            'value': product_data['load_index'],
+            'type': 'single_line_text_field'
+        })
+    
+    if product_data.get('speed_index'):
+        product['product']['metafields'].append({
+            'namespace': 'custom',
+            'key': 'speed_index',
+            'value': product_data['speed_index'],
+            'type': 'single_line_text_field'
+        })
+    
+    if product_data.get('item_condition'):
+        product['product']['metafields'].append({
+            'namespace': 'shopify',
+            'key': 'item-condition',
+            'value': product_data['item_condition'],
+            'type': 'single_line_text_field'
+        })
+    
     # Create the product
     response = requests.post(url, headers=get_shopify_headers(), json=product)
     
@@ -253,7 +333,17 @@ def create_product_route():
             'hauteur': request.form.get('hauteur'),
             'rayon': request.form.get('rayon'),
             'collection_ids': request.form.getlist('collection_ids'),
-            'status': request.form.get('status', 'draft')
+            'status': request.form.get('status', 'draft'),
+            # New metafields
+            'tire_count': request.form.get('tire_count', 2),
+            'commercial_tire': request.form.get('commercial_tire', ''),
+            'tread_depth': request.form.get('tread_depth', ''),
+            'price_difference_to_new': request.form.get('price_difference_to_new', ''),
+            'dot': request.form.get('dot', ''),
+            'tire_provider': request.form.get('tire_provider', ''),
+            'load_index': request.form.get('load_index', ''),
+            'speed_index': request.form.get('speed_index', ''),
+            'item_condition': request.form.get('item_condition', '')
         }
         
         # Handle image uploads

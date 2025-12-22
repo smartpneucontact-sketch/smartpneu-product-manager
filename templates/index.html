@@ -704,6 +704,33 @@
                             document.getElementById('price').value = data.price;
                         }
                         
+                        // Auto-add to collection based on tire type
+                        if (data.type) {
+                            const typeCollections = {
+                                'Ete': 'ÉTÉ',
+                                'Hiver': 'HIVER',
+                                '4 saisons': '4 SAISONS'
+                            };
+                            
+                            const typeCollectionName = typeCollections[data.type];
+                            if (typeCollectionName) {
+                                console.log(`Tire type is ${data.type}, looking for collection: ${typeCollectionName}`);
+                                
+                                const collectionSelect = document.getElementById('collection_select');
+                                for (let i = 0; i < collectionSelect.options.length; i++) {
+                                    const option = collectionSelect.options[i];
+                                    if (option.dataset.title && option.dataset.title.toLowerCase() === typeCollectionName.toLowerCase()) {
+                                        const collectionId = option.value;
+                                        if (collectionId && !selectedCollections.has(collectionId)) {
+                                            console.log(`Auto-adding to collection: ${typeCollectionName} (ID: ${collectionId})`);
+                                            selectedCollections.set(collectionId, typeCollectionName);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        
                         // Auto-add to collections based on boolean features
                         const featureCollections = {
                             '3pmsf': '3PMSF',

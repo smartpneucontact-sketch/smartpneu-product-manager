@@ -703,6 +703,40 @@
                             console.log('Setting price to:', data.price);
                             document.getElementById('price').value = data.price;
                         }
+                        
+                        // Auto-add to collections based on boolean features
+                        const featureCollections = {
+                            '3pmsf': '3PMSF',
+                            'runflat': 'RUNFLAT',
+                            'protection_jante': 'PROTECTION JANTE',
+                            'renforce': 'Renforcé'
+                        };
+                        
+                        // Get all available collections
+                        const collectionSelect = document.getElementById('collection_select');
+                        
+                        Object.keys(featureCollections).forEach(feature => {
+                            if (data[feature] === true) {
+                                const collectionName = featureCollections[feature];
+                                console.log(`Feature ${feature} is true, looking for collection: ${collectionName}`);
+                                
+                                // Find matching collection in dropdown
+                                for (let i = 0; i < collectionSelect.options.length; i++) {
+                                    const option = collectionSelect.options[i];
+                                    if (option.dataset.title && option.dataset.title.toLowerCase() === collectionName.toLowerCase()) {
+                                        const collectionId = option.value;
+                                        if (collectionId && !selectedCollections.has(collectionId)) {
+                                            console.log(`Auto-adding to collection: ${collectionName} (ID: ${collectionId})`);
+                                            selectedCollections.set(collectionId, collectionName);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Render all selected collections (including auto-added ones)
+                        renderCollectionTags();
                     } else {
                         console.log('No data received or empty object');
                     }

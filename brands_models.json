@@ -8,28 +8,44 @@
                     "type": "Ete",
                     "speed_index": "Y",
                     "load_index": "91",
-                    "price": "150.00"
+                    "price": "150.00",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": false,
+                    "renforce": false
                 },
                 {
                     "name": "Pilot Sport 5",
                     "type": "Ete",
                     "speed_index": "Y",
                     "load_index": "94",
-                    "price": "165.00"
+                    "price": "165.00",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": true,
+                    "renforce": false
                 },
                 {
                     "name": "Primacy 4",
                     "type": "Ete",
                     "speed_index": "W",
                     "load_index": "91",
-                    "price": "140.00"
+                    "price": "140.00",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": false,
+                    "renforce": false
                 },
                 {
                     "name": "CrossClimate 2",
                     "type": "4 saisons",
                     "speed_index": "V",
                     "load_index": "94",
-                    "price": "175.00"
+                    "price": "175.00",
+                    "3pmsf": true,
+                    "runflat": false,
+                    "protection_jante": false,
+                    "renforce": false
                 }
             ]
         },
@@ -41,21 +57,33 @@
                     "type": "Ete",
                     "speed_index": "Y",
                     "load_index": "91",
-                    "price": "145.00"
+                    "price": "145.00",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": true,
+                    "renforce": false
                 },
                 {
                     "name": "EcoContact 6",
                     "type": "Ete",
                     "speed_index": "V",
                     "load_index": "88",
-                    "price": "130.00"
+                    "price": "130.00",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": false,
+                    "renforce": false
                 },
                 {
                     "name": "SportContact 7",
                     "type": "Ete",
                     "speed_index": "Y",
                     "load_index": "94",
-                    "price": "160.00"
+                    "price": "160.00",
+                    "3pmsf": false,
+                    "runflat": true,
+                    "protection_jante": true,
+                    "renforce": false
                 }
             ]
         },
@@ -67,14 +95,22 @@
                     "type": "Ete",
                     "speed_index": "Y",
                     "load_index": "91",
-                    "price": "155.00"
+                    "price": "155.00",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": false,
+                    "renforce": false
                 },
                 {
                     "name": "EfficientGrip",
                     "type": "Ete",
                     "speed_index": "W",
                     "load_index": "88",
-                    "price": "125.00"
+                    "price": "125.00",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": false,
+                    "renforce": true
                 }
             ]
         }

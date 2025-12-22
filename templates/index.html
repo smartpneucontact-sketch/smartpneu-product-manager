@@ -615,7 +615,14 @@
 
     <script>
         // Brand and Model data from server
-        const brandsModels = {{ brands_models | tojson }};
+        let brandsModels = {};
+        try {
+            brandsModels = {{ brands_models | tojson | safe }};
+        } catch (e) {
+            console.error('Error loading brands data:', e);
+            brandsModels = {};
+        }
+        console.log('Loaded brandsModels:', brandsModels);
 
         // Handle brand selection
         document.getElementById('brand').addEventListener('change', function() {
@@ -629,10 +636,10 @@
                 modelSelect.disabled = false;
                 modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
                 
-                brandsModels[brand].forEach(model => {
+                brandsModels[brand].forEach(modelName => {
                     const option = document.createElement('option');
-                    option.value = model;
-                    option.textContent = model;
+                    option.value = modelName;
+                    option.textContent = modelName;
                     modelSelect.appendChild(option);
                 });
             } else {
@@ -644,7 +651,66 @@
         });
 
         // Handle model selection
-        document.getElementById('model').addEventListener('change', updateTitle);
+        document.getElementById('model').addEventListener('change', async function() {
+            updateTitle();
+            
+            // Fetch model details and auto-populate fields
+            const brand = document.getElementById('brand').value;
+            const model = this.value;
+            
+            console.log('Model selected:', model);
+            console.log('Brand:', brand);
+            
+            if (brand && model) {
+                try {
+                    const url = `/api/model-details/${encodeURIComponent(brand)}/${encodeURIComponent(model)}`;
+                    console.log('Fetching from:', url);
+                    
+                    const response = await fetch(url);
+                    console.log('Response status:', response.status);
+                    
+                    const data = await response.json();
+                    console.log('Received data:', data);
+                    
+                    if (data && Object.keys(data).length > 0) {
+                        // Auto-populate product type based on tire type
+                        if (data.type) {
+                            const productTypeSelect = document.getElementById('product_type');
+                            const typeMap = {
+                                'Ete': "Pneu d'été",
+                                'Hiver': 'Pneu hiver',
+                                '4 saisons': 'Pneus 4 saisons'
+                            };
+                            const mappedType = typeMap[data.type] || '';
+                            console.log('Setting product type to:', mappedType);
+                            productTypeSelect.value = mappedType;
+                        }
+                        
+                        // Auto-populate speed index
+                        if (data.speed_index) {
+                            console.log('Setting speed index to:', data.speed_index);
+                            document.getElementById('speed_index').value = data.speed_index;
+                        }
+                        
+                        // Auto-populate load index
+                        if (data.load_index) {
+                            console.log('Setting load index to:', data.load_index);
+                            document.getElementById('load_index').value = data.load_index;
+                        }
+                        
+                        // Auto-populate price
+                        if (data.price) {
+                            console.log('Setting price to:', data.price);
+                            document.getElementById('price').value = data.price;
+                        }
+                    } else {
+                        console.log('No data received or empty object');
+                    }
+                } catch (error) {
+                    console.error('Error fetching model details:', error);
+                }
+            }
+        });
 
         // Update title based on model only
         function updateTitle() {

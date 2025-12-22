@@ -704,6 +704,23 @@
                             document.getElementById('price').value = data.price;
                         }
                         
+                        // Auto-add to collection based on brand
+                        if (brand) {
+                            console.log(`Auto-adding brand collection: ${brand}`);
+                            const collectionSelect = document.getElementById('collection_select');
+                            for (let i = 0; i < collectionSelect.options.length; i++) {
+                                const option = collectionSelect.options[i];
+                                if (option.dataset.title && option.dataset.title.toLowerCase() === brand.toLowerCase()) {
+                                    const collectionId = option.value;
+                                    if (collectionId && !selectedCollections.has(collectionId)) {
+                                        console.log(`Auto-adding to brand collection: ${brand} (ID: ${collectionId})`);
+                                        selectedCollections.set(collectionId, brand);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        
                         // Auto-add to collection based on tire type
                         if (data.type) {
                             const typeCollections = {

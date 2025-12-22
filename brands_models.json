@@ -21,7 +21,7 @@
                     "load_index": "94",
                     "price": "165.00",
                     "3pmsf": false,
-                    "runflat": false,
+                    "runflat": true,
                     "protection_jante": true,
                     "renforce": false
                 },

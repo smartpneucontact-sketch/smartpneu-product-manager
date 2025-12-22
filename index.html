@@ -631,8 +631,10 @@
                 
                 brandsModels[brand].forEach(model => {
                     const option = document.createElement('option');
-                    option.value = model;
-                    option.textContent = model;
+                    // Handle both old format (strings) and new format (objects)
+                    const modelName = typeof model === 'string' ? model : model.name;
+                    option.value = modelName;
+                    option.textContent = modelName;
                     modelSelect.appendChild(option);
                 });
             } else {

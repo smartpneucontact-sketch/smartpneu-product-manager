@@ -35,10 +35,15 @@ def load_brands_models():
         if 'brands' in data:
             brands_dict = {}
             for brand in data['brands']:
-                brands_dict[brand['name']] = brand['models']
-            return brands_dict
+                # Store just model names for dropdown (not full objects)
+                brands_dict[brand['name']] = [model['name'] if isinstance(model, dict) else model for model in brand['models']]
+            return brands_dict, data  # Return both formats
         # Handle old format for backward compatibility
-        return data
+        return data, data
+
+# Store full model data for API lookups
+BRANDS_MODELS_SIMPLE, BRANDS_MODELS_FULL = load_brands_models()
+
 
 # Load default description from HTML file
 def load_default_description():
@@ -46,7 +51,6 @@ def load_default_description():
     with open(html_path, 'r', encoding='utf-8') as f:
         return f.read()
 
-BRANDS_MODELS = load_brands_models()
 DEFAULT_DESCRIPTION = load_default_description()
 
 
@@ -392,26 +396,26 @@ def index():
     """Main page with the product creation form"""
     collections = get_collections()
     next_sku = get_next_sku()
-    return render_template('index.html', collections=collections, next_sku=next_sku, brands_models=BRANDS_MODELS, default_description=DEFAULT_DESCRIPTION)
+    return render_template('index.html', collections=collections, next_sku=next_sku, brands_models=BRANDS_MODELS_SIMPLE, default_description=DEFAULT_DESCRIPTION)
 
 
 @app.route('/api/get-models/<brand>')
 def get_models(brand):
     """Return models for a specific brand"""
-    models = BRANDS_MODELS.get(brand, [])
-    # Return just model names for dropdown
-    if models and isinstance(models[0], dict):
-        return jsonify([model['name'] for model in models])
+    models = BRANDS_MODELS_SIMPLE.get(brand, [])
     return jsonify(models)
 
 
 @app.route('/api/model-details/<brand>/<model>')
 def get_model_details(brand, model):
     """Return details for a specific tire model"""
-    models = BRANDS_MODELS.get(brand, [])
-    for model_obj in models:
-        if isinstance(model_obj, dict) and model_obj.get('name') == model:
-            return jsonify(model_obj)
+    # Search in the full data structure
+    if 'brands' in BRANDS_MODELS_FULL:
+        for brand_obj in BRANDS_MODELS_FULL['brands']:
+            if brand_obj['name'] == brand:
+                for model_obj in brand_obj['models']:
+                    if isinstance(model_obj, dict) and model_obj.get('name') == model:
+                        return jsonify(model_obj)
     return jsonify({})
 
 

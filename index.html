@@ -629,10 +629,8 @@
                 modelSelect.disabled = false;
                 modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
                 
-                brandsModels[brand].forEach(model => {
+                brandsModels[brand].forEach(modelName => {
                     const option = document.createElement('option');
-                    // Handle both old format (strings) and new format (objects)
-                    const modelName = typeof model === 'string' ? model : model.name;
                     option.value = modelName;
                     option.textContent = modelName;
                     modelSelect.appendChild(option);

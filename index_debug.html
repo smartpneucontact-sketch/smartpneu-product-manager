@@ -615,14 +615,7 @@
 
     <script>
         // Brand and Model data from server
-        let brandsModels = {};
-        try {
-            brandsModels = {{ brands_models | tojson | safe }};
-        } catch (e) {
-            console.error('Error loading brands data:', e);
-            brandsModels = {};
-        }
-        console.log('Loaded brandsModels:', brandsModels);
+        const brandsModels = {{ brands_models | tojson }};
 
         // Handle brand selection
         document.getElementById('brand').addEventListener('change', function() {

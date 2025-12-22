@@ -399,6 +399,12 @@ def index():
     return render_template('index.html', collections=collections, next_sku=next_sku, brands_models=BRANDS_MODELS_SIMPLE, default_description=DEFAULT_DESCRIPTION)
 
 
+@app.route('/test')
+def test():
+    """Test page to check brands_models data"""
+    return render_template('test.html', brands_models=BRANDS_MODELS_SIMPLE)
+
+
 @app.route('/api/get-models/<brand>')
 def get_models(brand):
     """Return models for a specific brand"""

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Brands Data</title>
+</head>
+<body>
+    <h1>Testing Brands Models Data</h1>
+    <div id="output"></div>
+    
+    <script>
+        // Test if the data loads
+        const brandsModels = {{ brands_models | tojson | safe }};
+        
+        document.getElementById('output').innerHTML = '<pre>' + JSON.stringify(brandsModels, null, 2) + '</pre>';
+        console.log('Brands Models:', brandsModels);
+    </script>
+</body>
+</html>

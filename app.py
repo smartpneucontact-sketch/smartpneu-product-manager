@@ -30,7 +30,15 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def load_brands_models():
     json_path = os.path.join(os.path.dirname(__file__), 'brands_models.json')
     with open(json_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        data = json.load(f)
+        # Convert new format to dict for easy access
+        if 'brands' in data:
+            brands_dict = {}
+            for brand in data['brands']:
+                brands_dict[brand['name']] = brand['models']
+            return brands_dict
+        # Handle old format for backward compatibility
+        return data
 
 # Load default description from HTML file
 def load_default_description():
@@ -391,7 +399,20 @@ def index():
 def get_models(brand):
     """Return models for a specific brand"""
     models = BRANDS_MODELS.get(brand, [])
+    # Return just model names for dropdown
+    if models and isinstance(models[0], dict):
+        return jsonify([model['name'] for model in models])
     return jsonify(models)
+
+
+@app.route('/api/model-details/<brand>/<model>')
+def get_model_details(brand, model):
+    """Return details for a specific tire model"""
+    models = BRANDS_MODELS.get(brand, [])
+    for model_obj in models:
+        if isinstance(model_obj, dict) and model_obj.get('name') == model:
+            return jsonify(model_obj)
+    return jsonify({})
 
 
 @app.route('/create-product', methods=['POST'])

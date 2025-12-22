@@ -1,17 +1,82 @@
 {
-    "Michelin": [
-        "Pilot Sport 4",
-        "Pilot Sport 5",
-        "Primacy 4",
-        "CrossClimate 2"
-    ],
-    "Continental": [
-        "PremiumContact 6",
-        "EcoContact 6",
-        "SportContact 7"
-    ],
-    "Goodyear": [
-        "Eagle F1",
-        "EfficientGrip"
+    "brands": [
+        {
+            "name": "Michelin",
+            "models": [
+                {
+                    "name": "Pilot Sport 4",
+                    "type": "Ete",
+                    "speed_index": "Y",
+                    "load_index": "91",
+                    "price": "150.00"
+                },
+                {
+                    "name": "Pilot Sport 5",
+                    "type": "Ete",
+                    "speed_index": "Y",
+                    "load_index": "94",
+                    "price": "165.00"
+                },
+                {
+                    "name": "Primacy 4",
+                    "type": "Ete",
+                    "speed_index": "W",
+                    "load_index": "91",
+                    "price": "140.00"
+                },
+                {
+                    "name": "CrossClimate 2",
+                    "type": "4 saisons",
+                    "speed_index": "V",
+                    "load_index": "94",
+                    "price": "175.00"
+                }
+            ]
+        },
+        {
+            "name": "Continental",
+            "models": [
+                {
+                    "name": "PremiumContact 6",
+                    "type": "Ete",
+                    "speed_index": "Y",
+                    "load_index": "91",
+                    "price": "145.00"
+                },
+                {
+                    "name": "EcoContact 6",
+                    "type": "Ete",
+                    "speed_index": "V",
+                    "load_index": "88",
+                    "price": "130.00"
+                },
+                {
+                    "name": "SportContact 7",
+                    "type": "Ete",
+                    "speed_index": "Y",
+                    "load_index": "94",
+                    "price": "160.00"
+                }
+            ]
+        },
+        {
+            "name": "Goodyear",
+            "models": [
+                {
+                    "name": "Eagle F1",
+                    "type": "Ete",
+                    "speed_index": "Y",
+                    "load_index": "91",
+                    "price": "155.00"
+                },
+                {
+                    "name": "EfficientGrip",
+                    "type": "Ete",
+                    "speed_index": "W",
+                    "load_index": "88",
+                    "price": "125.00"
+                }
+            ]
+        }
     ]
 }

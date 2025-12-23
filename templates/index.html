@@ -570,6 +570,7 @@
                             <input type="number" id="price" name="price" required 
                                    step="0.01" min="0" placeholder="0.00">
                         </div>
+                        <span class="help-text" id="price-helper">Enter used tire price</span>
                     </div>
 
                     <div class="form-group">
@@ -698,10 +699,15 @@
                             document.getElementById('load_index').value = data.load_index;
                         }
                         
-                        // Auto-populate price
+                        // Store reference price for new tire (don't populate the price field)
+                        let newTirePrice = null;
                         if (data.price) {
-                            console.log('Setting price to:', data.price);
-                            document.getElementById('price').value = data.price;
+                            newTirePrice = parseFloat(data.price);
+                            console.log('New tire reference price:', newTirePrice);
+                            // Store in a data attribute for later calculation
+                            document.getElementById('price').dataset.newPrice = newTirePrice;
+                            // Update helper text
+                            document.getElementById('price-helper').textContent = `New tire price: ${newTirePrice}€ - Enter used tire price`;
                         }
                         
                         // Auto-add to collection based on brand
@@ -887,6 +893,22 @@
                     reader.readAsDataURL(file);
                 }
             });
+        });
+
+        // Auto-calculate price difference when user enters used tire price
+        document.getElementById('price').addEventListener('input', function() {
+            const usedPrice = parseFloat(this.value);
+            const newPrice = parseFloat(this.dataset.newPrice);
+            
+            if (usedPrice && newPrice && usedPrice > 0 && newPrice > 0) {
+                // Calculate percentage difference: ((new - used) / new) * 100
+                const percentDifference = Math.round(((newPrice - usedPrice) / newPrice) * 100);
+                
+                console.log(`Calculating: New price: ${newPrice}€, Used price: ${usedPrice}€, Difference: ${percentDifference}%`);
+                
+                // Update the price difference field
+                document.getElementById('price_difference_to_new').value = percentDifference;
+            }
         });
 
         // Set default arrival date to today

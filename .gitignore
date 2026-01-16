@@ -3,3 +3,10 @@ __pycache__/
 *.pyc
 uploads/
 .DS_Store
+
+# Label printing
+.env
+labels/*.pdf
+*.pyc
+__pycache__/
+.venv/

@@ -1,5 +1,12 @@
 Flask==3.0.0
-requests==2.31.0
+ShopifyAPI==12.3.0
 python-dotenv==1.0.0
 Werkzeug==3.0.1
-gunicorn==21.2.0
+
+# Label printing dependencies
+reportlab==4.0.7
+qrcode[pil]==7.4.2
+Pillow==10.1.0
+
+# Windows printing (only needed on Windows)
+pywin32==306; sys_platform == 'win32'

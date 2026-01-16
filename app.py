@@ -1,521 +1,274 @@
+from flask import Flask, render_template, request, jsonify, redirect, url_for
+import shopify
 import os
-import json
-from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
-import requests
-from werkzeug.utils import secure_filename
-import base64
 from dotenv import load_dotenv
+from werkzeug.utils import secure_filename
+from label_printer import TireLabelPrinter
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-this')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# Shopify Configuration
-SHOPIFY_STORE = os.getenv('SHOPIFY_STORE', 'smartpneu')
+# Shopify configuration
+SHOPIFY_STORE = os.getenv('SHOPIFY_STORE')
 SHOPIFY_ACCESS_TOKEN = os.getenv('SHOPIFY_ACCESS_TOKEN')
-SHOPIFY_API_VERSION = '2024-01'
+SHOP_URL = f"https://{SHOPIFY_STORE}.myshopify.com"
 
-# File upload configuration
-UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+# Label printer configuration
+PRINTER_NAME = os.getenv('PRINTER_NAME', 'HP_Color_LaserJet_MFP_M179fnw')
+AUTO_PRINT_LABELS = os.getenv('AUTO_PRINT_LABELS', 'true').lower() == 'true'
 
-# Create uploads folder if it doesn't exist
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# Initialize label printer
+label_printer = TireLabelPrinter(printer_name=PRINTER_NAME)
 
-# Load Brand and Model data from JSON file
-def load_brands_models():
-    json_path = os.path.join(os.path.dirname(__file__), 'brands_models.json')
-    with open(json_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-        # Convert new format to dict for easy access
-        if 'brands' in data:
-            brands_dict = {}
-            for brand in data['brands']:
-                # Store just model names for dropdown (not full objects)
-                brands_dict[brand['name']] = [model['name'] if isinstance(model, dict) else model for model in brand['models']]
-            return brands_dict, data  # Return both formats
-        # Handle old format for backward compatibility
-        return data, data
+# Initialize Shopify session
+session = shopify.Session(SHOP_URL, "2024-01", SHOPIFY_ACCESS_TOKEN)
+shopify.ShopifyResource.activate_session(session)
 
-# Store full model data for API lookups
-BRANDS_MODELS_SIMPLE, BRANDS_MODELS_FULL = load_brands_models()
-
-
-# Load default description from HTML file
-def load_default_description():
-    html_path = os.path.join(os.path.dirname(__file__), 'default_description.html')
-    with open(html_path, 'r', encoding='utf-8') as f:
-        return f.read()
-
-DEFAULT_DESCRIPTION = load_default_description()
-
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def get_shopify_headers():
-    return {
-        'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
-        'Content-Type': 'application/json'
-    }
-
-
-def get_shopify_url(endpoint):
-    return f"https://{SHOPIFY_STORE}.myshopify.com/admin/api/{SHOPIFY_API_VERSION}/{endpoint}"
-
-
-def get_collections():
-    """Fetch all custom collections and smart collections from Shopify"""
-    collections = []
-    
-    # Get custom collections
-    url = get_shopify_url('custom_collections.json')
-    response = requests.get(url, headers=get_shopify_headers())
-    if response.status_code == 200:
-        collections.extend(response.json().get('custom_collections', []))
-    
-    # Get smart collections
-    url = get_shopify_url('smart_collections.json')
-    response = requests.get(url, headers=get_shopify_headers())
-    if response.status_code == 200:
-        collections.extend(response.json().get('smart_collections', []))
-    
-    return collections
-
-
-def get_next_sku():
-    """Fetch all products and find the highest numeric SKU, then return next one"""
-    highest_sku = 0
-    
-    # Shopify API paginates products, so we need to fetch all pages
-    url = get_shopify_url('products.json?limit=250&fields=id,variants')
-    
-    while url:
-        response = requests.get(url, headers=get_shopify_headers())
-        
-        if response.status_code != 200:
-            break
-            
-        products = response.json().get('products', [])
-        
-        for product in products:
-            for variant in product.get('variants', []):
-                sku = variant.get('sku', '')
-                # Check if SKU is numeric
-                if sku and sku.isdigit():
-                    sku_num = int(sku)
-                    if sku_num > highest_sku:
-                        highest_sku = sku_num
-        
-        # Check for next page in Link header
-        link_header = response.headers.get('Link', '')
-        if 'rel="next"' in link_header:
-            # Extract next page URL
-            links = link_header.split(',')
-            for link in links:
-                if 'rel="next"' in link:
-                    url = link.split(';')[0].strip('<> ')
-                    break
-        else:
-            url = None
-    
-    return highest_sku + 1
-
-
-def upload_image_to_shopify(product_id, image_path):
-    """Upload an image to a Shopify product"""
-    with open(image_path, 'rb') as img_file:
-        encoded_image = base64.b64encode(img_file.read()).decode('utf-8')
-    
-    url = get_shopify_url(f'products/{product_id}/images.json')
-    data = {
-        'image': {
-            'attachment': encoded_image
-        }
-    }
-    
-    response = requests.post(url, headers=get_shopify_headers(), json=data)
-    return response.status_code == 200 or response.status_code == 201
-
-
-def create_product(product_data, images=None):
-    """Create a new product in Shopify"""
-    url = get_shopify_url('products.json')
-    
-    # Build product payload
-    product = {
-        'product': {
-            'title': product_data['title'],
-            'body_html': product_data.get('description', ''),
-            'vendor': product_data.get('vendor', ''),
-            'product_type': product_data.get('product_type', 'Pneu d\'été'),
-            'product_category': {'product_taxonomy_node_id': 'gid://shopify/ProductTaxonomyNode/552'},
-            'status': product_data.get('status', 'draft'),
-            'variants': [
-                {
-                    'price': product_data.get('price', '0.00'),
-                    'sku': product_data.get('sku', ''),
-                    'barcode': product_data.get('barcode', ''),
-                    'inventory_management': 'shopify',
-                    'inventory_quantity': int(product_data.get('inventory_quantity', 1)),
-                    'requires_shipping': True
-                }
-            ],
-            'metafields': []
-        }
-    }
-    
-    # Add metafields for tire specifications
-    if product_data.get('largeur'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'largeur',
-            'value': int(product_data['largeur']),
-            'type': 'number_integer'
-        })
-    
-    if product_data.get('hauteur'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'hauteur',
-            'value': int(product_data['hauteur']),
-            'type': 'number_integer'
-        })
-    
-    if product_data.get('rayon'):
-        # Extract number from rayon (e.g., "R17" -> 17)
-        rayon_value = product_data['rayon'].replace('R', '').replace('r', '').strip()
-        try:
-            product['product']['metafields'].append({
-                'namespace': 'custom',
-                'key': 'rayon',
-                'value': int(rayon_value),
-                'type': 'number_integer'
-            })
-        except ValueError:
-            pass
-    
-    if product_data.get('model'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'model',
-            'value': product_data['model'],
-            'type': 'single_line_text_field'
-        })
-    
-    if product_data.get('tire_count'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'tire_count',
-            'value': int(product_data['tire_count']),
-            'type': 'number_integer'
-        })
-    
-    if product_data.get('commercial_tire'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'commercial_tire',
-            'value': product_data['commercial_tire'],
-            'type': 'single_line_text_field'
-        })
-    
-    if product_data.get('tread_depth'):
-        # Remove "mm" and convert to decimal
-        tread_value = product_data['tread_depth'].replace('mm', '').replace(' ', '').strip()
-        try:
-            product['product']['metafields'].append({
-                'namespace': 'custom',
-                'key': 'tread_depth',
-                'value': str(float(tread_value)),
-                'type': 'number_decimal'
-            })
-        except ValueError:
-            pass  # Skip if not a valid number
-    
-    if product_data.get('price_difference_to_new'):
-        try:
-            product['product']['metafields'].append({
-                'namespace': 'custom',
-                'key': 'price_difference_to_new',
-                'value': int(product_data['price_difference_to_new']),
-                'type': 'number_integer'
-            })
-        except ValueError:
-            pass
-    
-    if product_data.get('dot'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'dot',
-            'value': product_data['dot'],
-            'type': 'single_line_text_field'
-        })
-    
-    if product_data.get('tire_provider'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'tire_provider',
-            'value': product_data['tire_provider'],
-            'type': 'single_line_text_field'
-        })
-    
-    if product_data.get('load_index'):
-        try:
-            product['product']['metafields'].append({
-                'namespace': 'custom',
-                'key': 'load_index',
-                'value': int(product_data['load_index']),
-                'type': 'number_integer'
-            })
-        except ValueError:
-            pass  # Skip if not a valid number
-    
-    if product_data.get('speed_index'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'speed_index',
-            'value': product_data['speed_index'],
-            'type': 'single_line_text_field'
-        })
-    
-    if product_data.get('arrival_date'):
-        product['product']['metafields'].append({
-            'namespace': 'custom',
-            'key': 'arrival_date',
-            'value': product_data['arrival_date'],
-            'type': 'date'
-        })
-    
-    # Create the product
-    response = requests.post(url, headers=get_shopify_headers(), json=product)
-    
-    if response.status_code in [200, 201]:
-        created_product = response.json().get('product', {})
-        product_id = created_product.get('id')
-        
-        # Upload images if provided
-        if images and product_id:
-            for image_path in images:
-                upload_image_to_shopify(product_id, image_path)
-        
-        # Add to collections if specified
-        collection_ids = product_data.get('collection_ids', [])
-        if collection_ids and product_id:
-            for collection_id in collection_ids:
-                if collection_id:
-                    add_to_collection(product_id, collection_id)
-        
-        # Publish to all sales channels (Online Store, Shop, POS, Inbox)
-        if product_id:
-            publish_to_sales_channels(product_id)
-        
-        return {'success': True, 'product': created_product}
-    else:
-        return {'success': False, 'error': response.json()}
-
-
-def add_to_collection(product_id, collection_id):
-    """Add a product to a collection"""
-    url = get_shopify_url('collects.json')
-    data = {
-        'collect': {
-            'product_id': product_id,
-            'collection_id': int(collection_id)
-        }
-    }
-    response = requests.post(url, headers=get_shopify_headers(), json=data)
-    return response.status_code in [200, 201]
-
-
-def publish_to_sales_channels(product_id):
-    """Publish product to all sales channels using GraphQL"""
-    # GraphQL endpoint
-    url = f"https://{SHOPIFY_STORE}.myshopify.com/admin/api/{SHOPIFY_API_VERSION}/graphql.json"
-    
-    # First, get all publications
-    query = """
-    {
-        publications(first: 20) {
-            edges {
-                node {
-                    id
-                    name
-                }
-            }
-        }
-    }
+def extract_tire_data_from_product(product_data, product_obj):
     """
+    Extract tire information from product data and Shopify product object
+    for label printing
+    """
+    # Get metafields for tire specifications
+    metafields = {}
+    if hasattr(product_obj, 'metafields'):
+        for mf in product_obj.metafields():
+            metafields[mf.key] = mf.value
     
-    response = requests.post(url, headers=get_shopify_headers(), json={'query': query})
+    # Get first variant for SKU
+    sku = ''
+    if hasattr(product_obj, 'variants') and len(product_obj.variants) > 0:
+        sku = product_obj.variants[0].sku or str(product_obj.id)
     
-    if response.status_code != 200:
-        return False
+    # Build product URL
+    product_url = f"https://{SHOPIFY_STORE}.myshopify.com/products/{product_obj.handle}"
     
-    data = response.json()
-    publications = data.get('data', {}).get('publications', {}).get('edges', [])
+    # Extract tire data
+    tire_data = {
+        'brand': product_data.get('vendor', metafields.get('marque', '')),
+        'model': product_data.get('title', ''),
+        'largeur': metafields.get('largeur', product_data.get('largeur', '')),
+        'hauteur': metafields.get('hauteur', product_data.get('hauteur', '')),
+        'rayon': metafields.get('rayon', product_data.get('rayon', '')),
+        'indice_charge': metafields.get('indice_charge', product_data.get('indice_charge', '')),
+        'indice_vitesse': metafields.get('indice_vitesse', product_data.get('indice_vitesse', '')),
+        'dot': metafields.get('dot', product_data.get('dot', '')),
+        'profondeur': metafields.get('profondeur', product_data.get('profondeur', '')),
+        'sku': sku,
+        'product_url': product_url
+    }
     
-    # Publish to each channel
-    product_gid = f"gid://shopify/Product/{product_id}"
-    
-    for pub in publications:
-        pub_id = pub['node']['id']
-        
-        mutation = """
-        mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
-            publishablePublish(id: $id, input: $input) {
-                publishable {
-                    availablePublicationsCount {
-                        count
-                    }
-                }
-                userErrors {
-                    field
-                    message
-                }
-            }
-        }
-        """
-        
-        variables = {
-            "id": product_gid,
-            "input": [{"publicationId": pub_id}]
-        }
-        
-        requests.post(url, headers=get_shopify_headers(), json={'query': mutation, 'variables': variables})
-    
-    return True
-
+    return tire_data
 
 @app.route('/')
 def index():
-    """Main page with the product creation form"""
-    collections = get_collections()
-    next_sku = get_next_sku()
-    return render_template('index.html', collections=collections, next_sku=next_sku, brands_models=BRANDS_MODELS_SIMPLE, default_description=DEFAULT_DESCRIPTION)
-
-
-@app.route('/test')
-def test():
-    """Test page to check brands_models data"""
-    return render_template('test.html', brands_models=BRANDS_MODELS_SIMPLE)
-
-
-@app.route('/api/get-models/<brand>')
-def get_models(brand):
-    """Return models for a specific brand"""
-    models = BRANDS_MODELS_SIMPLE.get(brand, [])
-    return jsonify(models)
-
-
-@app.route('/api/model-details/<brand>/<model>')
-def get_model_details(brand, model):
-    """Return details for a specific tire model"""
-    # Search in the full data structure
-    if 'brands' in BRANDS_MODELS_FULL:
-        for brand_obj in BRANDS_MODELS_FULL['brands']:
-            if brand_obj['name'] == brand:
-                for model_obj in brand_obj['models']:
-                    if isinstance(model_obj, dict) and model_obj.get('name') == model:
-                        return jsonify(model_obj)
-    return jsonify({})
-
+    """Homepage with product creation form"""
+    try:
+        shop = shopify.Shop.current()
+        connection_status = {
+            'connected': True,
+            'store_name': shop.name,
+            'email': shop.email
+        }
+    except Exception as e:
+        connection_status = {
+            'connected': False,
+            'error': str(e)
+        }
+    
+    return render_template('index.html', connection_status=connection_status)
 
 @app.route('/create-product', methods=['POST'])
-def create_product_route():
-    """Handle product creation form submission"""
+def create_product():
+    """Create a new product in Shopify and optionally print label"""
     try:
         # Get form data
         product_data = {
             'title': request.form.get('title'),
-            'description': request.form.get('description'),
-            'price': request.form.get('price'),
-            'sku': request.form.get('sku'),
-            'barcode': request.form.get('barcode'),
-            'vendor': request.form.get('vendor'),
-            'model': request.form.get('model'),
-            'product_type': request.form.get('product_type', 'Pneu d\'été'),
-            'inventory_quantity': request.form.get('inventory_quantity', 1),
-            'largeur': request.form.get('largeur'),
-            'hauteur': request.form.get('hauteur'),
-            'rayon': request.form.get('rayon'),
-            'collection_ids': request.form.getlist('collection_ids'),
-            'status': request.form.get('status', 'draft'),
-            # New metafields
-            'tire_count': request.form.get('tire_count', 2),
-            'commercial_tire': request.form.get('commercial_tire', ''),
-            'tread_depth': request.form.get('tread_depth', ''),
-            'price_difference_to_new': request.form.get('price_difference_to_new', ''),
+            'body_html': request.form.get('description'),
+            'vendor': request.form.get('vendor', ''),
+            'product_type': request.form.get('product_type', 'Tire'),
+            'status': request.form.get('status', 'active'),
+            'largeur': request.form.get('largeur', ''),
+            'hauteur': request.form.get('hauteur', ''),
+            'rayon': request.form.get('rayon', ''),
+            'indice_charge': request.form.get('indice_charge', ''),
+            'indice_vitesse': request.form.get('indice_vitesse', ''),
             'dot': request.form.get('dot', ''),
-            'tire_provider': request.form.get('tire_provider', ''),
-            'load_index': request.form.get('load_index', ''),
-            'speed_index': request.form.get('speed_index', ''),
-            'item_condition': request.form.get('item_condition', 'Occasion certifiée'),
-            'arrival_date': request.form.get('arrival_date', '')
+            'profondeur': request.form.get('profondeur', ''),
         }
+        
+        # Create product
+        product = shopify.Product()
+        product.title = product_data['title']
+        product.body_html = product_data['body_html']
+        product.vendor = product_data['vendor']
+        product.product_type = product_data['product_type']
+        product.status = product_data['status']
+        
+        # Add variant with price and SKU
+        variant = shopify.Variant()
+        variant.price = request.form.get('price', '0.00')
+        variant.inventory_quantity = int(request.form.get('quantity', 0))
+        variant.sku = request.form.get('sku', '')
+        product.variants = [variant]
         
         # Handle image uploads
         images = []
         if 'images' in request.files:
-            files = request.files.getlist('images')
-            for file in files:
-                if file and file.filename and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    file.save(filepath)
-                    images.append(filepath)
+            for image_file in request.files.getlist('images'):
+                if image_file and image_file.filename:
+                    image = shopify.Image()
+                    image.attach_image(image_file.read())
+                    images.append(image)
         
-        # Create the product
-        result = create_product(product_data, images)
+        if images:
+            product.images = images
         
-        # Clean up uploaded files
-        for image_path in images:
-            if os.path.exists(image_path):
-                os.remove(image_path)
-        
-        if result['success']:
-            flash(f"Product '{product_data['title']}' created successfully!", 'success')
-            return redirect(url_for('index'))
-        else:
-            flash(f"Error creating product: {result['error']}", 'error')
-            return redirect(url_for('index'))
+        # Save product to Shopify
+        if product.save():
+            product_id = product.id
+            print(f"✅ Product created: {product.title} (ID: {product_id})")
             
-    except Exception as e:
-        flash(f"Error: {str(e)}", 'error')
-        return redirect(url_for('index'))
-
-
-@app.route('/api/test-connection')
-def test_connection():
-    """Test the Shopify API connection"""
-    try:
-        url = get_shopify_url('shop.json')
-        response = requests.get(url, headers=get_shopify_headers())
-        
-        if response.status_code == 200:
-            shop_data = response.json().get('shop', {})
+            # Add metafields for tire specifications
+            metafields_to_add = [
+                ('largeur', product_data['largeur'], 'number_integer'),
+                ('hauteur', product_data['hauteur'], 'number_integer'),
+                ('rayon', product_data['rayon'], 'single_line_text_field'),
+                ('indice_charge', product_data['indice_charge'], 'single_line_text_field'),
+                ('indice_vitesse', product_data['indice_vitesse'], 'single_line_text_field'),
+                ('dot', product_data['dot'], 'single_line_text_field'),
+                ('profondeur', product_data['profondeur'], 'single_line_text_field'),
+            ]
+            
+            for key, value, mf_type in metafields_to_add:
+                if value:  # Only add if value exists
+                    metafield = shopify.Metafield()
+                    metafield.namespace = 'custom'
+                    metafield.key = key
+                    metafield.value = value
+                    metafield.type = mf_type
+                    product.add_metafield(metafield)
+            
+            # Generate and print label
+            label_path = None
+            if AUTO_PRINT_LABELS:
+                try:
+                    # Extract tire data for label
+                    tire_data = extract_tire_data_from_product(product_data, product)
+                    
+                    # Generate and print label
+                    label_path = label_printer.generate_and_print(
+                        tire_data, 
+                        print_enabled=True
+                    )
+                    print(f"🏷️  Label created: {label_path}")
+                    
+                except Exception as label_error:
+                    print(f"⚠️  Label printing error: {str(label_error)}")
+                    # Don't fail the whole request if label printing fails
+            
             return jsonify({
                 'success': True,
-                'shop_name': shop_data.get('name'),
-                'domain': shop_data.get('domain')
+                'message': 'Product created successfully!',
+                'product_id': product_id,
+                'product_url': f"https://{SHOPIFY_STORE}.myshopify.com/admin/products/{product_id}",
+                'label_generated': label_path is not None,
+                'label_path': label_path
             })
         else:
             return jsonify({
                 'success': False,
-                'error': f"HTTP {response.status_code}: {response.text}"
-            })
+                'message': 'Failed to create product',
+                'errors': product.errors.full_messages()
+            }), 400
+            
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': str(e)
-        })
+            'message': str(e)
+        }), 500
 
+@app.route('/print-label/<product_id>', methods=['POST'])
+def print_label(product_id):
+    """Manually print label for an existing product"""
+    try:
+        # Fetch product from Shopify
+        product = shopify.Product.find(product_id)
+        
+        if not product:
+            return jsonify({
+                'success': False,
+                'message': 'Product not found'
+            }), 404
+        
+        # Extract tire data
+        tire_data = extract_tire_data_from_product({}, product)
+        
+        # Generate and print label
+        label_path = label_printer.generate_and_print(tire_data, print_enabled=True)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Label printed successfully',
+            'label_path': label_path
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@app.route('/test-label', methods=['GET'])
+def test_label():
+    """Test endpoint to generate a sample label without printing"""
+    test_data = {
+        'brand': 'Michelin',
+        'model': 'Pilot Sport 4',
+        'largeur': '225',
+        'hauteur': '45',
+        'rayon': '17',
+        'indice_charge': '94',
+        'indice_vitesse': 'Y',
+        'dot': '3419',
+        'profondeur': '7mm',
+        'sku': 'TEST-001',
+        'product_url': 'https://smartpneu.com/products/test'
+    }
+    
+    # Generate without printing
+    label_path = label_printer.generate_and_print(test_data, print_enabled=False)
+    
+    return jsonify({
+        'success': True,
+        'message': 'Test label generated (not printed)',
+        'label_path': label_path,
+        'note': f'Check {label_path} to verify label design'
+    })
+
+@app.route('/health')
+def health():
+    """Health check endpoint"""
+    try:
+        shop = shopify.Shop.current()
+        return jsonify({
+            'status': 'healthy',
+            'shopify_connected': True,
+            'store': shop.name,
+            'label_printing': AUTO_PRINT_LABELS
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'shopify_connected': False,
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
-    if not SHOPIFY_ACCESS_TOKEN:
-        print("⚠️  Warning: SHOPIFY_ACCESS_TOKEN not set in .env file")
-    app.run(debug=True, port=5000)
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)

@@ -6,7 +6,7 @@ Werkzeug==3.0.1
 # Label printing dependencies
 reportlab==4.0.7
 qrcode[pil]==7.4.2
-Pillow==10.1.0
+Pillow>=10.2.0
 
 # Windows printing (only needed on Windows)
 pywin32==306; sys_platform == 'win32'

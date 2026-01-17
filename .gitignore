@@ -10,3 +10,19 @@ labels/*.pdf
 *.pyc
 __pycache__/
 .venv/
+
+# Label printing
+labels/*.pdf
+
+# Python cache
+*.pyc
+__pycache__/
+.venv/
+venv/
+shopify-env/
+
+# Environment variables (NEVER PUSH THIS!)
+.env
+
+# macOS
+.DS_Store

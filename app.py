@@ -1,16 +1,24 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 import shopify
 import os
+import json
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from label_printer import TireLabelPrinter
 
 # Load environment variables
 load_dotenv()
+print("=" * 50)
+print("DEBUG: Environment Variables")
+print(f"SHOPIFY_STORE: {os.getenv('SHOPIFY_STORE')}")
+print(f"SHOPIFY_ACCESS_TOKEN: {os.getenv('SHOPIFY_ACCESS_TOKEN')[:15]}...") # Only show first 15 chars
+print(f"SHOP_URL will be: https://{os.getenv('SHOPIFY_STORE')}.myshopify.com")
+print("=" * 50)
 
+# CREATE THE APP FIRST! ← This must come before @app.route
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 # Shopify configuration
 SHOPIFY_STORE = os.getenv('SHOPIFY_STORE')
@@ -24,9 +32,13 @@ AUTO_PRINT_LABELS = os.getenv('AUTO_PRINT_LABELS', 'true').lower() == 'true'
 # Initialize label printer
 label_printer = TireLabelPrinter(printer_name=PRINTER_NAME)
 
-# Initialize Shopify session
-session = shopify.Session(SHOP_URL, "2024-01", SHOPIFY_ACCESS_TOKEN)
+# Initialize Shopify session with proper configuration
+api_version = "unstable"
+session = shopify.Session(SHOP_URL, api_version, SHOPIFY_ACCESS_TOKEN)
+
+# Activate session and set up connection
 shopify.ShopifyResource.activate_session(session)
+shopify.ShopifyResource.site = f"{SHOP_URL}/admin/api/{api_version}"
 
 def extract_tire_data_from_product(product_data, product_obj):
     """
@@ -36,8 +48,11 @@ def extract_tire_data_from_product(product_data, product_obj):
     # Get metafields for tire specifications
     metafields = {}
     if hasattr(product_obj, 'metafields'):
-        for mf in product_obj.metafields():
-            metafields[mf.key] = mf.value
+        try:
+            for mf in product_obj.metafields():
+                metafields[mf.key] = mf.value
+        except:
+            pass
     
     # Get first variant for SKU
     sku = ''
@@ -50,7 +65,7 @@ def extract_tire_data_from_product(product_data, product_obj):
     # Extract tire data
     tire_data = {
         'brand': product_data.get('vendor', metafields.get('marque', '')),
-        'model': product_data.get('title', ''),
+        'model': product_data.get('title', product_obj.title if hasattr(product_obj, 'title') else ''),
         'largeur': metafields.get('largeur', product_data.get('largeur', '')),
         'hauteur': metafields.get('hauteur', product_data.get('hauteur', '')),
         'rayon': metafields.get('rayon', product_data.get('rayon', '')),
@@ -64,6 +79,7 @@ def extract_tire_data_from_product(product_data, product_obj):
     
     return tire_data
 
+# NOW you can use @app.route
 @app.route('/')
 def index():
     """Homepage with product creation form"""
@@ -80,7 +96,106 @@ def index():
             'error': str(e)
         }
     
-    return render_template('index.html', connection_status=connection_status)
+    # Load brands and models from JSON file
+    try:
+        with open('brands_models.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+        # Transform the new structure to work with the template
+        brands_models = {}
+        full_tire_data = {}  # Store complete tire info for later use
+        
+        if 'brands' in data:
+            for brand in data['brands']:
+                brand_name = brand['name']
+                brands_models[brand_name] = [model['name'] for model in brand['models']]
+                # Store complete data for potential future use
+                full_tire_data[brand_name] = brand['models']
+        else:
+            # Fallback for old format
+            brands_models = data
+            
+    except FileNotFoundError:
+        brands_models = {}
+        full_tire_data = {}
+    
+    return render_template('index.html', 
+                         connection_status=connection_status,
+                         brands_models=brands_models)
+
+@app.route('/api/test-connection')
+def test_connection():
+    """Test Shopify connection endpoint"""
+    print("\n" + "="*50)
+    print("🔍 TESTING SHOPIFY CONNECTION")
+    print(f"Store: {SHOPIFY_STORE}")
+    print(f"Shop URL: {SHOP_URL}")
+    print(f"Token (first 15 chars): {SHOPIFY_ACCESS_TOKEN[:15]}...")
+    print("="*50)
+    
+    try:
+        # Create a fresh session for this request
+        test_session = shopify.Session(SHOP_URL, "unstable", SHOPIFY_ACCESS_TOKEN)
+        shopify.ShopifyResource.activate_session(test_session)
+        
+        print("✅ Session activated, attempting to fetch shop...")
+        
+        shop = shopify.Shop.current()
+        
+        print("✅ CONNECTION SUCCESSFUL!")
+        print(f"Shop Name: {shop.name}")
+        print(f"Shop Email: {shop.email}")
+        print("="*50 + "\n")
+        
+        return jsonify({
+            'success': True,
+            'connected': True,
+            'store_name': shop.name,
+            'email': shop.email
+        })
+        
+    except Exception as e:
+        print("❌ CONNECTION FAILED!")
+        print(f"Error: {str(e)}")
+        print("\nFull traceback:")
+        import traceback
+        traceback.print_exc()
+        print("="*50 + "\n")
+        
+        return jsonify({
+            'success': False,
+            'connected': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/model-details/<brand>/<model>')
+def get_model_details(brand, model):
+    """Get detailed tire model information"""
+    try:
+        with open('brands_models.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # Find the brand
+        for brand_data in data['brands']:
+            if brand_data['name'] == brand:
+                # Find the model
+                for model_data in brand_data['models']:
+                    if model_data['name'] == model:
+                        return jsonify({
+                            'success': True,
+                            'model': model_data
+                        })
+        
+        return jsonify({
+            'success': False,
+            'error': 'Model not found'
+        }), 404
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/create-product', methods=['POST'])
 def create_product():

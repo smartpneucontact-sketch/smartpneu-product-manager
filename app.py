@@ -586,12 +586,20 @@ def create_product():
                 # Get SKU for filename
                 sku = product_data.get('sku', str(product_id))
                 
-                # Generate label with SKU in filename (printing disabled)
+                # Generate label with SKU in filename (printing disabled locally)
                 label_path = label_printer.generate_and_print(
                     tire_data, 
                     print_enabled=False
                 )
                 print(f"🏷️  Label created: {label_path}")
+                
+                # Add to remote print queue
+                if label_path and REMOTE_PRINTING_ENABLED:
+                    try:
+                        job_id = create_print_job_with_pdf(label_path, sku, tire_data)
+                        print(f"📋 Print job created: {job_id}")
+                    except Exception as job_error:
+                        print(f"⚠️  Print job creation error: {job_error}")
                 
             except Exception as label_error:
                 print(f"⚠️  Label generation error: {str(label_error)}")
@@ -638,13 +646,20 @@ def print_label(product_id):
         # Extract tire data
         tire_data = extract_tire_data_from_product({}, product)
         
-        # Generate and print label
-        label_path = label_printer.generate_and_print(tire_data, print_enabled=True)
+        # Generate label (local printing disabled - use remote queue)
+        label_path = label_printer.generate_and_print(tire_data, print_enabled=False)
+        
+        # Add to remote print queue
+        job_id = None
+        if label_path and REMOTE_PRINTING_ENABLED:
+            sku = tire_data.get('sku', str(product_id))
+            job_id = create_print_job_with_pdf(label_path, sku, tire_data)
         
         return jsonify({
             'success': True,
-            'message': 'Label printed successfully',
-            'label_path': label_path
+            'message': 'Label sent to print queue',
+            'label_path': label_path,
+            'job_id': job_id
         })
         
     except Exception as e:
@@ -1009,6 +1024,9 @@ def set_color_mode():
 def generate_test_label():
     """Generate a test label with current color mode settings"""
     try:
+        data = request.get_json() or {}
+        send_to_printer = data.get('send_to_printer', False)
+        
         test_data = {
             'brand': 'TEST',
             'model': 'Color Mode Test',
@@ -1023,16 +1041,23 @@ def generate_test_label():
             'product_url': 'https://smartpneu.com/test'
         }
         
-        # Generate without printing
+        # Generate without local printing
         pdf_path = label_printer.generate_and_print(test_data, print_enabled=False)
         mode = "B&W" if label_printer.black_and_white else "Color"
+        
+        # Optionally add to print queue
+        job_id = None
+        if send_to_printer and REMOTE_PRINTING_ENABLED:
+            job_id = create_print_job_with_pdf(pdf_path, test_data['sku'], test_data)
         
         return jsonify({
             'success': True,
             'message': f'Test label generated in {mode} mode',
             'label_path': pdf_path,
             'mode': mode,
-            'filename': os.path.basename(pdf_path)
+            'filename': os.path.basename(pdf_path),
+            'job_id': job_id,
+            'sent_to_printer': job_id is not None
         })
     except Exception as e:
         return jsonify({

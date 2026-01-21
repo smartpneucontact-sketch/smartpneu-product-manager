@@ -9,5 +9,8 @@ reportlab==4.0.7
 qrcode[pil]==7.4.2
 Pillow>=10.2.0
 
+# HTTP client for print agent
+requests>=2.31.0
+
 # Windows printing (only needed on Windows)
 pywin32==306; sys_platform == 'win32'

@@ -37,9 +37,9 @@ def create_print_job_with_pdf(pdf_path, sku, product_data=None):
         'pdf_filename': os.path.basename(pdf_path),
         'sku': sku,
         'product_data': product_data or {},
-        'status': 'pending',
+        'status': 'pending',  # pending -> downloaded -> cleared
         'created_at': datetime.now().isoformat(),
-        'completed_at': None,
+        'downloaded_at': None,
         'printer': None,
         'error': None
     }
@@ -50,7 +50,7 @@ def create_print_job_with_pdf(pdf_path, sku, product_data=None):
 
 def get_pending_jobs(include_pdf=True):
     """
-    Get all pending print jobs
+    Get all pending print jobs (not yet downloaded by agent)
     
     Args:
         include_pdf: If True, include PDF data in response
@@ -75,25 +75,27 @@ def get_job(job_id, include_pdf=True):
     return job
 
 
-def complete_job(job_id, success=True, message="", printer=None):
+def mark_job_downloaded(job_id):
     """
-    Mark a job as complete and remove PDF data to free memory
+    Mark a job as downloaded (saved locally by agent)
+    Job stays in list but PDF data is cleared to save memory
     """
     if job_id not in print_jobs:
         return False
     
-    print_jobs[job_id]['status'] = 'complete' if success else 'failed'
-    print_jobs[job_id]['completed_at'] = datetime.now().isoformat()
-    print_jobs[job_id]['printer'] = printer
+    print_jobs[job_id]['status'] = 'downloaded'
+    print_jobs[job_id]['downloaded_at'] = datetime.now().isoformat()
     print_jobs[job_id]['pdf_data'] = None  # Free memory
     
-    if not success:
-        print_jobs[job_id]['error'] = message
-    
-    status = "✅ Complete" if success else "❌ Failed"
-    print(f"{status}: Job {job_id}")
-    
+    print(f"✅ Downloaded: Job {job_id}")
     return True
+
+
+def complete_job(job_id, success=True, message="", printer=None):
+    """
+    Mark a job as downloaded (keeping backward compatibility)
+    """
+    return mark_job_downloaded(job_id)
 
 
 def get_all_jobs(limit=50):
@@ -106,24 +108,27 @@ def get_all_jobs(limit=50):
     return jobs[:limit]
 
 
-def cleanup_old_jobs(max_age_hours=24):
-    """Remove completed jobs older than max_age_hours"""
-    cutoff = datetime.now() - timedelta(hours=max_age_hours)
-    
-    to_remove = []
-    for job_id, job in print_jobs.items():
-        if job['status'] in ['complete', 'failed']:
-            created = datetime.fromisoformat(job['created_at'])
-            if created < cutoff:
-                to_remove.append(job_id)
+def clear_downloaded_jobs():
+    """Remove all downloaded jobs to free memory"""
+    to_remove = [
+        job_id for job_id, job in print_jobs.items()
+        if job['status'] == 'downloaded'
+    ]
     
     for job_id in to_remove:
         del print_jobs[job_id]
     
     if to_remove:
-        print(f"🧹 Cleaned up {len(to_remove)} old jobs")
+        print(f"🧹 Cleared {len(to_remove)} downloaded jobs")
+    
+    return len(to_remove)
 
 
 def get_pending_count():
-    """Get count of pending jobs"""
+    """Get count of pending jobs (not yet downloaded)"""
     return sum(1 for job in print_jobs.values() if job['status'] == 'pending')
+
+
+def get_downloaded_count():
+    """Get count of downloaded jobs"""
+    return sum(1 for job in print_jobs.values() if job['status'] == 'downloaded')

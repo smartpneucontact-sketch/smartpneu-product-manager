@@ -428,36 +428,36 @@
                 <h2 class="card-title">Tire Specifications</h2>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="largeur">Largeur (Width)</label>
+                        <label for="largeur">Largeur (Width) <span class="required">*</span></label>
                         <input type="number" id="largeur" name="largeur" 
-                               placeholder="225" min="100" max="400">
+                               placeholder="225" min="100" max="400" required>
                         <span class="help-text">Width in mm (e.g., 225)</span>
                     </div>
 
                     <div class="form-group">
-                        <label for="hauteur">Hauteur (Aspect Ratio)</label>
+                        <label for="hauteur">Hauteur (Aspect Ratio) <span class="required">*</span></label>
                         <input type="number" id="hauteur" name="hauteur" 
-                               placeholder="45" min="20" max="90">
+                               placeholder="45" min="20" max="90" required>
                         <span class="help-text">Profile in % (e.g., 45)</span>
                     </div>
 
                     <div class="form-group">
-                        <label for="rayon">Rayon (Rim Size)</label>
+                        <label for="rayon">Rayon (Rim Size) <span class="required">*</span></label>
                         <input type="number" id="rayon" name="rayon" 
-                               placeholder="17" min="12" max="24">
+                               placeholder="17" min="12" max="24" required>
                         <span class="help-text">Rim diameter (e.g., 17)</span>
                     </div>
 
                     <div class="form-group">
-                        <label for="load_index">Load Index</label>
+                        <label for="load_index">Load Index <span class="required">*</span></label>
                         <input type="number" id="load_index" name="load_index" 
-                               placeholder="91" min="60" max="130">
+                               placeholder="91" min="60" max="130" required>
                         <span class="help-text">e.g., 91</span>
                     </div>
 
                     <div class="form-group">
-                        <label for="speed_index">Speed Index</label>
-                        <select id="speed_index" name="speed_index">
+                        <label for="speed_index">Speed Index <span class="required">*</span></label>
+                        <select id="speed_index" name="speed_index" required>
                             <option value="">-- Select --</option>
                             <option value="Q">Q</option>
                             <option value="R">R</option>
@@ -473,16 +473,16 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="dot_week">DOT</label>
+                        <label for="dot_week">DOT <span class="required">*</span></label>
                         <div class="dot-group">
-                            <select id="dot_week" name="dot_week">
+                            <select id="dot_week" name="dot_week" required>
                                 <option value="">Week</option>
                                 {% for i in range(1, 53) %}
                                 <option value="{{ '%02d' % i }}">{{ '%02d' % i }}</option>
                                 {% endfor %}
                             </select>
                             <span class="dot-separator">/</span>
-                            <select id="dot_year" name="dot_year">
+                            <select id="dot_year" name="dot_year" required>
                                 <option value="">Year</option>
                                 <option value="25">25</option>
                                 <option value="24">24</option>
@@ -544,9 +544,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="tread_depth">Tread Depth (mm)</label>
+                        <label for="tread_depth">Tread Depth (mm) <span class="required">*</span></label>
                         <input type="number" id="tread_depth" name="tread_depth" 
-                               placeholder="8.26" step="0.01" min="0" max="15">
+                               placeholder="8.26" step="0.01" min="0" max="15" required>
                         <span class="help-text">e.g., 8.26</span>
                     </div>
 

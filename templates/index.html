@@ -1283,11 +1283,17 @@
                 const data = await response.json();
                 
                 if (data.success && data.data) {
-                    // Populate form with existing data
-                    populateLabelEditForm(filename, data.data);
+                    // Check if we have full data or just SKU
+                    if (data.data.brand || data.data.largeur) {
+                        populateLabelEditForm(filename, data.data);
+                    } else {
+                        populateLabelEditForm(filename, data.data);
+                        alert('⚠️ No saved data for this label. Fill in the details and save to preserve them.');
+                    }
                 } else {
                     // Populate with defaults using SKU
                     populateLabelEditForm(filename, { sku: sku });
+                    alert('⚠️ No saved data for this label. Fill in the details and save to preserve them.');
                 }
             } catch (error) {
                 // Populate with defaults
@@ -1304,7 +1310,7 @@
             document.getElementById('editModel').value = data.model || '';
             document.getElementById('editLargeur').value = data.largeur || '';
             document.getElementById('editHauteur').value = data.hauteur || '';
-            document.getElementById('editRayon').value = (data.rayon || '').replace('R', '').replace('r', '');
+            document.getElementById('editRayon').value = String(data.rayon || '').replace('R', '').replace('r', '');
             document.getElementById('editSku').value = data.sku || '';
             document.getElementById('editIndiceCharge').value = data.indice_charge || '';
             document.getElementById('editIndiceVitesse').value = data.indice_vitesse || '';

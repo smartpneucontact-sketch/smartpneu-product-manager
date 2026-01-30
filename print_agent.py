@@ -140,6 +140,7 @@ HTML_TEMPLATE = """
         }
         .toast.success { background: #43a047; }
         .toast.error { background: #e53935; }
+        .toast.warning { background: #ff9800; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } }
         .header { display: flex; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
         .header h1 { margin: 0; flex: 1; }
@@ -369,9 +370,17 @@ HTML_TEMPLATE = """
                 const data = await response.json();
                 
                 if (data.success && data.data) {
-                    populateEditForm(path, data.data);
+                    // Check if we have full data or just SKU
+                    if (data.data.brand || data.data.largeur) {
+                        populateEditForm(path, data.data);
+                    } else {
+                        // Only have SKU - show message
+                        populateEditForm(path, data.data);
+                        showToast('⚠️ No saved data for this label - fill in details to save', 'warning');
+                    }
                 } else {
                     populateEditForm(path, { sku: sku });
+                    showToast('⚠️ No saved data for this label - fill in details to save', 'warning');
                 }
             } catch (e) {
                 populateEditForm(path, { sku: sku });
@@ -898,7 +907,7 @@ def process_job(job):
     pdf_base64 = job.get('pdf_data')
     filename = job.get('pdf_filename', f'{job_id}.pdf')
     sku = job.get('sku', 'unknown')
-    tire_data = job.get('tire_data', {})
+    tire_data = job.get('product_data', {})  # tire data is stored as product_data
     
     print(f"📥 Downloading: {sku}")
     

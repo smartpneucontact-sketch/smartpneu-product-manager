@@ -114,7 +114,7 @@ class TireLabelPrinter:
         
         # Product information - italic labels with big bold values
         y_position = self.height - 46*mm
-        line_height = 20*mm  # More space for bigger values
+        line_height = 16*mm  # Compact spacing for all fields to fit
         
         # Format dimensions properly
         rayon = product_data.get('rayon', '').replace('R', '').replace('r', '')
@@ -142,15 +142,15 @@ class TireLabelPrinter:
             # Value in bold, black - EXTRA BIG for Dimensions and Réf
             c.setFillColor(HexColor("#000000"))
             if label == "Dimensions":
-                c.setFont("Helvetica-Bold", 48)
-                c.drawString(8*mm, y_position - 12*mm, str(value) if value else "—")
-                y_position -= line_height + 16*mm
+                c.setFont("Helvetica-Bold", 42)
+                c.drawString(8*mm, y_position - 10*mm, str(value) if value else "—")
+                y_position -= line_height + 12*mm
             elif label == "Réf":
-                c.setFont("Helvetica-Bold", 36)
-                c.drawString(8*mm, y_position - 8*mm, str(value) if value else "—")
-                y_position -= line_height + 8*mm
+                c.setFont("Helvetica-Bold", 38)
+                c.drawString(8*mm, y_position - 9*mm, str(value) if value else "—")
+                y_position -= line_height + 10*mm
             else:
-                c.setFont("Helvetica-Bold", 20)
+                c.setFont("Helvetica-Bold", 18)
                 c.drawString(8*mm, y_position - 4*mm, str(value) if value else "—")
                 y_position -= line_height
         

@@ -11,7 +11,7 @@ Web interface: http://localhost:5050
 
 Configuration via environment variables or .env file:
     SERVER_URL - Railway app URL (e.g., https://your-app.railway.app)
-    PRINTER_NAME - Local printer name (default: Brother_DCP_L2530DW_series)
+    PRINTER_NAME - Local printer name (default: Brother_MFC_L3710CW_series)
     POLL_INTERVAL - Seconds between polls (default: 5)
     PRINT_AGENT_API_KEY - API key for authentication (optional)
     LABELS_FOLDER - Where to save labels (default: ~/Documents/SmartPneu-Labels)
@@ -36,7 +36,7 @@ load_dotenv()
 
 # Configuration
 SERVER_URL = os.getenv('SERVER_URL', 'http://localhost:5000')
-PRINTER_NAME = os.getenv('PRINTER_NAME', 'Brother_DCP_L2530DW_series')
+PRINTER_NAME = os.getenv('PRINTER_NAME', 'Brother_MFC_L3710CW_series')
 POLL_INTERVAL = int(os.getenv('POLL_INTERVAL', 5))
 API_KEY = os.getenv('PRINT_AGENT_API_KEY', '')
 LABELS_FOLDER = os.getenv('LABELS_FOLDER', os.path.expanduser('~/Documents/SmartPneu-Labels'))
@@ -431,7 +431,7 @@ def print_pdf(pdf_path):
         'lp',
         '-d', PRINTER_NAME,
         '-o', 'media=Custom.120x220mm,labels',
-        '-o', 'InputSlot=manual',
+        '-o', 'InputSlot=Auto',
         pdf_path
     ]
     

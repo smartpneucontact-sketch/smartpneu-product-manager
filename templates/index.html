@@ -780,7 +780,218 @@
             color: #991b1b;
             display: block;
         }
+        
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: #d97706;
+        }
+        
+        /* Label Edit Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0.25rem;
+        }
+        
+        .modal-close:hover {
+            color: #000;
+        }
+        
+        .modal-form .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .modal-form label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+        
+        .modal-form input, .modal-form select {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .modal-form input:focus, .modal-form select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .modal-form .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .modal-form .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.75rem;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .modal-actions button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .btn-modal-cancel {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .btn-modal-cancel:hover {
+            background: #d1d5db;
+        }
+        
+        .btn-modal-save {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-modal-save:hover {
+            background: #2563eb;
+        }
+        
+        .btn-modal-save:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+        }
     </style>
+    
+    <!-- Label Edit Modal -->
+    <div id="labelEditModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Edit Label</h3>
+                <button class="modal-close" onclick="closeLabelEditModal()">&times;</button>
+            </div>
+            <form id="labelEditForm" class="modal-form" onsubmit="saveLabelEdit(event)">
+                <input type="hidden" id="editLabelFilename" name="filename">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editBrand">Brand (Marque)</label>
+                        <input type="text" id="editBrand" name="brand" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editModel">Model (Modèle)</label>
+                        <input type="text" id="editModel" name="model" required>
+                    </div>
+                </div>
+                
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label for="editLargeur">Largeur</label>
+                        <input type="text" id="editLargeur" name="largeur" placeholder="205" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editHauteur">Hauteur</label>
+                        <input type="text" id="editHauteur" name="hauteur" placeholder="55" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editRayon">Rayon</label>
+                        <input type="text" id="editRayon" name="rayon" placeholder="16" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editSku">Réf / SKU</label>
+                    <input type="text" id="editSku" name="sku" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editIndiceCharge">Indice de charge</label>
+                        <input type="text" id="editIndiceCharge" name="indice_charge" placeholder="91">
+                    </div>
+                    <div class="form-group">
+                        <label for="editIndiceVitesse">Indice de vitesse</label>
+                        <input type="text" id="editIndiceVitesse" name="indice_vitesse" placeholder="V">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editDot">DOT</label>
+                        <input type="text" id="editDot" name="dot" placeholder="3419">
+                    </div>
+                    <div class="form-group">
+                        <label for="editProfondeur">Profondeur</label>
+                        <input type="text" id="editProfondeur" name="profondeur" placeholder="7mm">
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal-cancel" onclick="closeLabelEditModal()">Cancel</button>
+                    <button type="submit" class="btn-modal-save" id="saveLabelBtn">💾 Save & Regenerate</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
         // ============================================================
@@ -958,6 +1169,9 @@
                                     <button class="btn-view" onclick="viewLabel('${label.filename}')" title="View/Download">
                                         👁️ View
                                     </button>
+                                    <button class="btn-edit" onclick="editLabel('${label.filename}', '${label.sku}')" title="Edit">
+                                        ✏️ Edit
+                                    </button>
                                     <button class="btn-print" onclick="printLabel('${label.filename}')" title="Print">
                                         🖨️ Print
                                     </button>
@@ -1057,6 +1271,115 @@
                 alert(`❌ Error: ${error.message}`);
             }
         }
+        
+        // ============================================================
+        // LABEL EDIT FUNCTIONS
+        // ============================================================
+        
+        async function editLabel(filename, sku) {
+            // Try to load existing label data from server
+            try {
+                const response = await fetch(`/api/label-data/${filename}`);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    // Populate form with existing data
+                    populateLabelEditForm(filename, data.data);
+                } else {
+                    // Populate with defaults using SKU
+                    populateLabelEditForm(filename, { sku: sku });
+                }
+            } catch (error) {
+                // Populate with defaults
+                populateLabelEditForm(filename, { sku: sku });
+            }
+            
+            // Show modal
+            document.getElementById('labelEditModal').style.display = 'flex';
+        }
+        
+        function populateLabelEditForm(filename, data) {
+            document.getElementById('editLabelFilename').value = filename;
+            document.getElementById('editBrand').value = data.brand || '';
+            document.getElementById('editModel').value = data.model || '';
+            document.getElementById('editLargeur').value = data.largeur || '';
+            document.getElementById('editHauteur').value = data.hauteur || '';
+            document.getElementById('editRayon').value = (data.rayon || '').replace('R', '').replace('r', '');
+            document.getElementById('editSku').value = data.sku || '';
+            document.getElementById('editIndiceCharge').value = data.indice_charge || '';
+            document.getElementById('editIndiceVitesse').value = data.indice_vitesse || '';
+            document.getElementById('editDot').value = data.dot || '';
+            document.getElementById('editProfondeur').value = data.profondeur || '';
+        }
+        
+        function closeLabelEditModal() {
+            document.getElementById('labelEditModal').style.display = 'none';
+            document.getElementById('labelEditForm').reset();
+        }
+        
+        async function saveLabelEdit(event) {
+            event.preventDefault();
+            
+            const saveBtn = document.getElementById('saveLabelBtn');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '⏳ Saving...';
+            saveBtn.disabled = true;
+            
+            const formData = {
+                filename: document.getElementById('editLabelFilename').value,
+                brand: document.getElementById('editBrand').value,
+                model: document.getElementById('editModel').value,
+                largeur: document.getElementById('editLargeur').value,
+                hauteur: document.getElementById('editHauteur').value,
+                rayon: document.getElementById('editRayon').value,
+                sku: document.getElementById('editSku').value,
+                indice_charge: document.getElementById('editIndiceCharge').value,
+                indice_vitesse: document.getElementById('editIndiceVitesse').value,
+                dot: document.getElementById('editDot').value,
+                profondeur: document.getElementById('editProfondeur').value
+            };
+            
+            try {
+                const response = await fetch('/api/regenerate-label', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeLabelEditModal();
+                    loadLabels();
+                    
+                    // Open the new label
+                    window.open(`/labels/${data.filename}`, '_blank');
+                    
+                    alert(`✅ Label regenerated successfully!`);
+                } else {
+                    alert(`❌ Failed to regenerate: ${data.error}`);
+                }
+            } catch (error) {
+                alert(`❌ Error: ${error.message}`);
+            } finally {
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            }
+        }
+        
+        // Close modal on backdrop click
+        document.getElementById('labelEditModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLabelEditModal();
+            }
+        });
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('labelEditModal').style.display === 'flex') {
+                closeLabelEditModal();
+            }
+        });
         
         // Labels section is hidden by default, data loads when user expands it
         // (see toggleLabelSection function)

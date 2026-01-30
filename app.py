@@ -593,6 +593,13 @@ def create_product():
                 )
                 print(f"🏷️  Label created: {label_path}")
                 
+                # Save label data as JSON for future editing
+                if label_path:
+                    import json
+                    json_path = label_path.replace('.pdf', '.json')
+                    with open(json_path, 'w') as f:
+                        json.dump(tire_data, f, indent=2)
+                
                 # Add to remote print queue
                 if label_path and REMOTE_PRINTING_ENABLED:
                     try:
@@ -687,6 +694,13 @@ def test_label():
     
     # Generate without printing
     label_path = label_printer.generate_and_print(test_data, print_enabled=False)
+    
+    # Save label data as JSON for future editing
+    if label_path:
+        import json
+        json_path = label_path.replace('.pdf', '.json')
+        with open(json_path, 'w') as f:
+            json.dump(test_data, f, indent=2)
     
     return jsonify({
         'success': True,
@@ -873,6 +887,114 @@ def download_label(filename):
     return send_from_directory(labels_dir, filename, as_attachment=False)
 
 
+@app.route('/api/label-data/<filename>')
+def get_label_data(filename):
+    """Get stored label data for editing"""
+    try:
+        # Security check
+        if not filename.endswith('.pdf'):
+            return jsonify({
+                'success': False,
+                'error': 'Invalid file type'
+            }), 400
+        
+        # Try to load label data from JSON file
+        json_filename = filename.replace('.pdf', '.json')
+        json_path = os.path.join('labels', json_filename)
+        
+        if os.path.exists(json_path):
+            import json
+            with open(json_path, 'r') as f:
+                label_data = json.load(f)
+            return jsonify({
+                'success': True,
+                'data': label_data
+            })
+        else:
+            # Extract SKU from filename as fallback
+            sku = filename.replace('label_', '').replace('.pdf', '')
+            return jsonify({
+                'success': True,
+                'data': {'sku': sku}
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/regenerate-label', methods=['POST'])
+def regenerate_label():
+    """Regenerate a label with updated data"""
+    try:
+        data = request.json
+        original_filename = data.get('filename', '')
+        
+        # Security check
+        if not original_filename.endswith('.pdf'):
+            return jsonify({
+                'success': False,
+                'error': 'Invalid file type'
+            }), 400
+        
+        # Prepare label data
+        label_data = {
+            'brand': data.get('brand', ''),
+            'model': data.get('model', ''),
+            'largeur': data.get('largeur', ''),
+            'hauteur': data.get('hauteur', ''),
+            'rayon': data.get('rayon', ''),
+            'sku': data.get('sku', ''),
+            'indice_charge': data.get('indice_charge', ''),
+            'indice_vitesse': data.get('indice_vitesse', ''),
+            'dot': data.get('dot', ''),
+            'profondeur': data.get('profondeur', ''),
+            'product_url': f"https://smartpneu.com/products/{data.get('sku', '')}"
+        }
+        
+        # Generate new filename based on SKU
+        new_sku = label_data['sku']
+        new_filename = f"label_{new_sku}.pdf"
+        output_path = os.path.join('labels', new_filename)
+        
+        # Create labels directory if needed
+        os.makedirs('labels', exist_ok=True)
+        
+        # Generate the new label
+        label_printer.create_label(label_data, output_path)
+        
+        # Save label data as JSON for future editing
+        json_path = output_path.replace('.pdf', '.json')
+        import json
+        with open(json_path, 'w') as f:
+            json.dump(label_data, f, indent=2)
+        
+        # Delete old file if it's different from new one
+        old_filepath = os.path.join('labels', original_filename)
+        if original_filename != new_filename and os.path.exists(old_filepath):
+            os.remove(old_filepath)
+            # Also remove old JSON if exists
+            old_json = old_filepath.replace('.pdf', '.json')
+            if os.path.exists(old_json):
+                os.remove(old_json)
+        
+        print(f"✅ Label regenerated: {new_filename}")
+        
+        return jsonify({
+            'success': True,
+            'filename': new_filename,
+            'message': 'Label regenerated successfully'
+        })
+        
+    except Exception as e:
+        print(f"❌ Label regeneration error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route('/api/print-label/<filename>', methods=['POST'])
 def print_specific_label(filename):
     """Print a specific label by filename"""
@@ -1045,6 +1167,13 @@ def generate_test_label():
         pdf_path = label_printer.generate_and_print(test_data, print_enabled=False)
         mode = "B&W" if label_printer.black_and_white else "Color"
         
+        # Save label data as JSON for future editing
+        if pdf_path:
+            import json
+            json_path = pdf_path.replace('.pdf', '.json')
+            with open(json_path, 'w') as f:
+                json.dump(test_data, f, indent=2)
+        
         # Optionally add to print queue
         job_id = None
         if send_to_printer and REMOTE_PRINTING_ENABLED:
@@ -1068,7 +1197,7 @@ def generate_test_label():
 
 @app.route('/api/delete-label/<filename>', methods=['DELETE'])
 def delete_label(filename):
-    """Delete a label PDF"""
+    """Delete a label PDF and its associated JSON data"""
     try:
         if not filename.endswith('.pdf'):
             return jsonify({
@@ -1085,6 +1214,11 @@ def delete_label(filename):
             }), 404
         
         os.remove(filepath)
+        
+        # Also remove JSON data file if exists
+        json_path = filepath.replace('.pdf', '.json')
+        if os.path.exists(json_path):
+            os.remove(json_path)
         
         return jsonify({
             'success': True,

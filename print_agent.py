@@ -30,6 +30,7 @@ from datetime import datetime
 from pathlib import Path
 from flask import Flask, render_template_string, jsonify, send_file, request
 from dotenv import load_dotenv
+from label_printer import TireLabelPrinter
 
 # Load environment variables
 load_dotenv()
@@ -123,6 +124,8 @@ HTML_TEMPLATE = """
         .btn-print:disabled { background: #ccc; cursor: not-allowed; }
         .btn-archive { background: #f5f5f5; color: #757575; border: 1px solid #e0e0e0; }
         .btn-archive:hover { background: #eeeeee; }
+        .btn-edit { background: #ff9800; color: white; }
+        .btn-edit:hover { background: #f57c00; }
         .btn-restore { background: #fff3e0; color: #f57c00; }
         .btn-restore:hover { background: #ffe0b2; }
         .btn-print-all { background: #43a047; color: white; padding: 8px 16px; }
@@ -202,6 +205,7 @@ HTML_TEMPLATE = """
                         </div>
                         <div class="btn-group">
                             <a href="/view/{{ label.path }}" target="_blank" class="btn btn-view">👁️</a>
+                            <button class="btn btn-edit" onclick="editLabel('{{ label.path }}', '{{ label.sku }}')">✏️</button>
                             <button class="btn btn-print" onclick="printLabel('{{ label.path }}', this)">🖨️ Print</button>
                             <button class="btn btn-archive" onclick="archiveLabel('{{ label.path }}')">📦</button>
                         </div>
@@ -357,7 +361,170 @@ HTML_TEMPLATE = """
             
             setTimeout(() => location.reload(), 500);
         }
+        
+        // Edit label functions
+        async function editLabel(path, sku) {
+            try {
+                const response = await fetch('/api/label-data/' + path);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    populateEditForm(path, data.data);
+                } else {
+                    populateEditForm(path, { sku: sku });
+                }
+            } catch (e) {
+                populateEditForm(path, { sku: sku });
+            }
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        
+        function populateEditForm(path, data) {
+            document.getElementById('editPath').value = path;
+            document.getElementById('editBrand').value = data.brand || '';
+            document.getElementById('editModel').value = data.model || '';
+            document.getElementById('editLargeur').value = data.largeur || '';
+            document.getElementById('editHauteur').value = data.hauteur || '';
+            document.getElementById('editRayon').value = (data.rayon || '').toString().replace('R', '').replace('r', '');
+            document.getElementById('editSku').value = data.sku || '';
+            document.getElementById('editIndiceCharge').value = data.indice_charge || '';
+            document.getElementById('editIndiceVitesse').value = data.indice_vitesse || '';
+            document.getElementById('editDot').value = data.dot || '';
+            document.getElementById('editProfondeur').value = data.profondeur || '';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        async function saveLabel(event) {
+            event.preventDefault();
+            
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Saving...';
+            
+            const formData = {
+                path: document.getElementById('editPath').value,
+                brand: document.getElementById('editBrand').value,
+                model: document.getElementById('editModel').value,
+                largeur: document.getElementById('editLargeur').value,
+                hauteur: document.getElementById('editHauteur').value,
+                rayon: document.getElementById('editRayon').value,
+                sku: document.getElementById('editSku').value,
+                indice_charge: document.getElementById('editIndiceCharge').value,
+                indice_vitesse: document.getElementById('editIndiceVitesse').value,
+                dot: document.getElementById('editDot').value,
+                profondeur: document.getElementById('editProfondeur').value
+            };
+            
+            try {
+                const response = await fetch('/api/regenerate-label', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeEditModal();
+                    showToast('✅ Label regenerated!', 'success');
+                    window.open('/view/' + data.path, '_blank');
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    showToast('❌ ' + data.error, 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error: ' + e.message, 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '💾 Save & Regenerate';
+        }
+        
+        // Close modal on backdrop click
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
+        
+        // Close on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeEditModal();
+        });
     </script>
+    
+    <!-- Edit Modal -->
+    <div id="editModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1000;">
+        <div style="background:white; border-radius:12px; padding:24px; width:90%; max-width:450px; max-height:90vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #e0e0e0;">
+                <h3 style="margin:0; font-size:18px;">✏️ Edit Label</h3>
+                <button onclick="closeEditModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#666;">&times;</button>
+            </div>
+            <form onsubmit="saveLabel(event)">
+                <input type="hidden" id="editPath">
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label style="display:block; font-size:13px; color:#666; margin-bottom:4px;">Brand</label>
+                        <input type="text" id="editBrand" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:13px; color:#666; margin-bottom:4px;">Model</label>
+                        <input type="text" id="editModel" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                </div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label style="display:block; font-size:13px; color:#666; margin-bottom:4px;">Largeur</label>
+                        <input type="text" id="editLargeur" placeholder="205" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:13px; color:#666; margin-bottom:4px;">Hauteur</label>
+                        <input type="text" id="editHauteur" placeholder="55" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:13px; color:#666; margin-bottom:4px;">Rayon</label>
+                        <input type="text" id="editRayon" placeholder="16" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; font-size:13px; color:#666; margin-bottom:4px;">Réf / SKU</label>
+                    <input type="text" id="editSku" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; font-weight:600;">
+                </div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label style="display:block; font-size:13px; color:#666; margin-bottom:4px;">Indice charge</label>
+                        <input type="text" id="editIndiceCharge" placeholder="91" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:13px; color:#666; margin-bottom:4px;">Indice vitesse</label>
+                        <input type="text" id="editIndiceVitesse" placeholder="V" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                </div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+                    <div>
+                        <label style="display:block; font-size:13px; color:#666; margin-bottom:4px;">DOT</label>
+                        <input type="text" id="editDot" placeholder="3419" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:13px; color:#666; margin-bottom:4px;">Profondeur</label>
+                        <input type="text" id="editProfondeur" placeholder="7mm" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                </div>
+                
+                <div style="display:flex; gap:12px; justify-content:flex-end; padding-top:15px; border-top:1px solid #e0e0e0;">
+                    <button type="button" onclick="closeEditModal()" style="padding:10px 20px; border:1px solid #ddd; border-radius:6px; background:#f5f5f5; cursor:pointer;">Cancel</button>
+                    <button type="submit" id="saveBtn" style="padding:10px 20px; border:none; border-radius:6px; background:#1976d2; color:white; cursor:pointer; font-weight:500;">💾 Save & Regenerate</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
 """
@@ -564,6 +731,94 @@ def api_status():
     })
 
 
+@app.route('/api/label-data/<path:filepath>')
+def get_label_data(filepath):
+    """Get stored label data for editing"""
+    try:
+        # Try to load JSON data file
+        pdf_path = os.path.join(LABELS_FOLDER, filepath)
+        json_path = pdf_path.replace('.pdf', '.json')
+        
+        if os.path.exists(json_path):
+            with open(json_path, 'r') as f:
+                label_data = json.load(f)
+            return jsonify({'success': True, 'data': label_data})
+        else:
+            # Extract SKU from filename as fallback
+            filename = os.path.basename(filepath)
+            parts = filename.replace('.pdf', '').split('_', 1)
+            sku = parts[1] if len(parts) > 1 else filename.replace('.pdf', '')
+            return jsonify({'success': True, 'data': {'sku': sku}})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/regenerate-label', methods=['POST'])
+def regenerate_label():
+    """Regenerate a label with updated data"""
+    try:
+        data = request.json
+        original_path = data.get('path', '')
+        
+        # Prepare label data
+        label_data = {
+            'brand': data.get('brand', ''),
+            'model': data.get('model', ''),
+            'largeur': data.get('largeur', ''),
+            'hauteur': data.get('hauteur', ''),
+            'rayon': data.get('rayon', ''),
+            'sku': data.get('sku', ''),
+            'indice_charge': data.get('indice_charge', ''),
+            'indice_vitesse': data.get('indice_vitesse', ''),
+            'dot': data.get('dot', ''),
+            'profondeur': data.get('profondeur', ''),
+            'product_url': f"https://smartpneu.com/products/{data.get('sku', '')}"
+        }
+        
+        # Get original folder structure
+        original_full_path = os.path.join(LABELS_FOLDER, original_path)
+        date_folder = os.path.dirname(original_path)
+        folder_path = os.path.join(LABELS_FOLDER, date_folder) if date_folder else LABELS_FOLDER
+        
+        # Create new filename with timestamp and SKU
+        timestamp = datetime.now().strftime("%H%M%S")
+        new_sku = label_data['sku']
+        new_filename = f"{timestamp}_{new_sku}.pdf"
+        new_path = os.path.join(date_folder, new_filename) if date_folder else new_filename
+        output_path = os.path.join(folder_path, new_filename)
+        
+        # Ensure folder exists
+        Path(folder_path).mkdir(parents=True, exist_ok=True)
+        
+        # Generate the new label
+        printer = TireLabelPrinter(black_and_white=True)
+        printer.create_label(label_data, output_path)
+        
+        # Save label data as JSON
+        json_path = output_path.replace('.pdf', '.json')
+        with open(json_path, 'w') as f:
+            json.dump(label_data, f, indent=2)
+        
+        # Delete old file if different
+        if original_full_path != output_path and os.path.exists(original_full_path):
+            os.remove(original_full_path)
+            old_json = original_full_path.replace('.pdf', '.json')
+            if os.path.exists(old_json):
+                os.remove(old_json)
+        
+        print(f"✅ Label regenerated: {new_path}")
+        
+        return jsonify({
+            'success': True,
+            'path': new_path,
+            'message': 'Label regenerated successfully'
+        })
+        
+    except Exception as e:
+        print(f"❌ Label regeneration error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # Print agent functions
 def get_pending_jobs():
     """Fetch pending print jobs from server"""
@@ -643,6 +898,7 @@ def process_job(job):
     pdf_base64 = job.get('pdf_data')
     filename = job.get('pdf_filename', f'{job_id}.pdf')
     sku = job.get('sku', 'unknown')
+    tire_data = job.get('tire_data', {})
     
     print(f"📥 Downloading: {sku}")
     
@@ -656,6 +912,15 @@ def process_job(job):
     if not pdf_path:
         mark_job_downloaded(job_id)
         return False
+    
+    # Save label data as JSON for editing
+    if tire_data and pdf_path:
+        json_path = pdf_path.replace('.pdf', '.json')
+        try:
+            with open(json_path, 'w') as f:
+                json.dump(tire_data, f, indent=2)
+        except Exception as e:
+            print(f"⚠️  Could not save JSON data: {e}")
     
     print(f"💾 Saved: {pdf_path}")
     

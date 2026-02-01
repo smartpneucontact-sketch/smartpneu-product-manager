@@ -325,6 +325,41 @@
             color: #6b7280;
             margin-top: 0.2rem;
         }
+        
+        /* Feature toggle buttons */
+        .feature-toggles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        
+        .feature-toggle {
+            padding: 0.5rem 0.75rem;
+            border: 2px solid #d1d5db;
+            border-radius: 20px;
+            background: white;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #374151;
+        }
+        
+        .feature-toggle:hover {
+            border-color: #CE333C;
+            background: #fef2f2;
+        }
+        
+        .feature-toggle.active {
+            background: #CE333C;
+            border-color: #CE333C;
+            color: white;
+        }
+        
+        .feature-toggle.active:hover {
+            background: #b52d35;
+        }
 
         .image-preview {
             display: flex;
@@ -488,6 +523,22 @@
                         </select>
                         <div class="selected-collections" id="selectedCollections"></div>
                         <div id="collectionInputs"></div>
+                        
+                        <!-- Feature Toggle Buttons -->
+                        <div class="feature-toggles">
+                            <button type="button" class="feature-toggle" data-feature="3PMSF" onclick="toggleFeatureCollection(this)">
+                                ❄️ 3PMSF
+                            </button>
+                            <button type="button" class="feature-toggle" data-feature="PROTECTION JANTE" onclick="toggleFeatureCollection(this)">
+                                🛡️ Protection Jante
+                            </button>
+                            <button type="button" class="feature-toggle" data-feature="RUNFLAT" onclick="toggleFeatureCollection(this)">
+                                🔧 Runflat
+                            </button>
+                            <button type="button" class="feature-toggle" data-feature="Renforcé" onclick="toggleFeatureCollection(this)">
+                                💪 Renforcé
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1679,6 +1730,66 @@
                 input.value = id;
                 inputsContainer.appendChild(input);
             });
+            
+            // Update toggle button states
+            updateToggleButtons();
+        }
+        
+        function updateToggleButtons() {
+            const toggles = document.querySelectorAll('.feature-toggle');
+            toggles.forEach(toggle => {
+                const featureName = toggle.dataset.feature;
+                let isActive = false;
+                
+                // Check if this feature's collection is selected
+                selectedCollections.forEach((title, id) => {
+                    if (title.toLowerCase() === featureName.toLowerCase()) {
+                        isActive = true;
+                    }
+                });
+                
+                if (isActive) {
+                    toggle.classList.add('active');
+                } else {
+                    toggle.classList.remove('active');
+                }
+            });
+        }
+        
+        function toggleFeatureCollection(button) {
+            const featureName = button.dataset.feature;
+            const collectionSelect = document.getElementById('collection_select');
+            
+            // Find the collection ID for this feature
+            let collectionId = null;
+            let collectionTitle = null;
+            
+            for (let i = 0; i < collectionSelect.options.length; i++) {
+                const option = collectionSelect.options[i];
+                if (option.dataset.title && option.dataset.title.toLowerCase() === featureName.toLowerCase()) {
+                    collectionId = option.value;
+                    collectionTitle = option.dataset.title;
+                    break;
+                }
+            }
+            
+            if (!collectionId) {
+                console.warn(`Collection not found for feature: ${featureName}`);
+                return;
+            }
+            
+            // Toggle the collection
+            if (selectedCollections.has(collectionId)) {
+                // Remove it
+                selectedCollections.delete(collectionId);
+                button.classList.remove('active');
+            } else {
+                // Add it
+                selectedCollections.set(collectionId, collectionTitle);
+                button.classList.add('active');
+            }
+            
+            renderCollectionTags();
         }
 
         function removeCollection(id) {

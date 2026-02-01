@@ -21,17 +21,17 @@
         .header {
             background-color: #121212;
             color: white;
-            padding: 1rem 2rem;
+            padding: 0.6rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .header h1 {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
 
         .header h1 span {
@@ -41,8 +41,8 @@
         .connection-status {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
+            gap: 0.4rem;
+            font-size: 0.8rem;
         }
 
         .status-dot {
@@ -62,30 +62,65 @@
 
         .container {
             max-width: 900px;
-            margin: 2rem auto;
-            padding: 0 1rem;
+            margin: 1rem auto;
+            padding: 0 0.75rem;
         }
 
         .card {
             background: white;
-            border-radius: 12px;
+            border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            padding: 2rem;
-            margin-bottom: 1.5rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
         }
 
         .card-title {
-            font-size: 1.125rem;
+            font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
             border-bottom: 2px solid #CE333C;
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1.25rem;
+            gap: 0.75rem;
+        }
+        
+        /* Compact SKU section at top */
+        .sku-bar {
+            background: linear-gradient(135deg, #CE333C, #a02830);
+            color: white;
+            border-radius: 10px;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .sku-bar label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 0;
+            white-space: nowrap;
+        }
+        
+        .sku-bar input {
+            padding: 0.5rem 0.75rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            width: 100px;
+            text-align: center;
+        }
+        
+        .sku-bar .sku-hint {
+            font-size: 0.75rem;
+            opacity: 0.9;
         }
 
         .form-group {
@@ -98,9 +133,9 @@
         }
 
         .form-group label {
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             font-weight: 500;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
             color: #374151;
         }
 
@@ -111,10 +146,10 @@
         .form-group input,
         .form-group select,
         .form-group textarea {
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 0.75rem;
             border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
@@ -123,16 +158,16 @@
         .form-group textarea:focus {
             outline: none;
             border-color: #CE333C;
-            box-shadow: 0 0 0 3px rgba(206, 51, 60, 0.1);
+            box-shadow: 0 0 0 2px rgba(206, 51, 60, 0.1);
         }
 
         .form-group textarea {
-            min-height: 120px;
+            min-height: 80px;
             resize: vertical;
         }
 
         .form-group input[type="file"] {
-            padding: 0.5rem;
+            padding: 0.4rem;
             cursor: pointer;
         }
 
@@ -143,10 +178,10 @@
         }
 
         .btn {
-            padding: 0.875rem 2rem;
+            padding: 0.6rem 1.5rem;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
@@ -173,24 +208,25 @@
 
         .form-actions {
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             justify-content: flex-end;
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
             border-top: 1px solid #e5e7eb;
         }
 
         .flash-messages {
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.75rem;
         }
 
         .flash {
-            padding: 1rem 1.25rem;
-            border-radius: 8px;
-            margin-bottom: 0.75rem;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
+            font-size: 0.9rem;
         }
 
         .flash.success {
@@ -207,7 +243,7 @@
 
         .input-group {
             display: flex;
-            gap: 0.5rem;
+            gap: 0;
         }
 
         .input-group input {
@@ -215,17 +251,17 @@
         }
 
         .input-prefix {
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 0.75rem;
             background-color: #f3f4f6;
             border: 1px solid #d1d5db;
             border-right: none;
-            border-radius: 8px 0 0 8px;
+            border-radius: 6px 0 0 6px;
             color: #6b7280;
-            font-size: 0.875rem;
+            font-size: 0.9rem;
         }
 
         .input-group input {
-            border-radius: 0 8px 8px 0;
+            border-radius: 0 6px 6px 0;
         }
 
         .form-group select[multiple] {
@@ -235,22 +271,22 @@
         .selected-collections {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.75rem;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
         }
 
         .dot-group {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
 
         .dot-group select {
             flex: 1;
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 0.75rem;
             border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
         }
 
         .dot-separator {
@@ -261,12 +297,12 @@
         .collection-tag {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.35rem;
             background-color: #CE333C;
             color: white;
-            padding: 0.375rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
         }
 
         .collection-tag .remove-btn {
@@ -274,7 +310,7 @@
             border: none;
             color: white;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.9rem;
             padding: 0;
             line-height: 1;
             opacity: 0.8;
@@ -285,29 +321,30 @@
         }
 
         .help-text {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #6b7280;
-            margin-top: 0.375rem;
+            margin-top: 0.2rem;
         }
 
         .image-preview {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.75rem;
-            margin-top: 0.75rem;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
         }
 
         .image-preview img {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 6px;
             border: 2px solid #e5e7eb;
         }
 
         @media (max-width: 768px) {
             .form-grid {
                 grid-template-columns: 1fr;
+                gap: 0.6rem;
             }
 
             .form-group.full-width {
@@ -324,6 +361,31 @@
 
             .btn {
                 width: 100%;
+            }
+            
+            .sku-bar {
+                flex-direction: row;
+                justify-content: flex-start;
+            }
+            
+            .sku-bar input {
+                flex: 0 0 auto;
+            }
+        }
+        
+        /* iPad-specific optimizations */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .container {
+                max-width: 100%;
+                padding: 0 1rem;
+            }
+            
+            .form-grid {
+                gap: 0.6rem;
+            }
+            
+            .card {
+                padding: 0.875rem 1rem;
             }
         }
     </style>
@@ -352,6 +414,13 @@
         {% endwith %}
 
         <form action="/create-product" method="POST" enctype="multipart/form-data">
+            <!-- SKU Bar - Top of form for easy access -->
+            <div class="sku-bar">
+                <label for="sku">📦 SKU:</label>
+                <input type="text" id="sku" name="sku" value="{{ next_sku }}" placeholder="1139">
+                <span class="sku-hint">Next available: {{ next_sku }}</span>
+            </div>
+
             <!-- Brand & Model Selection -->
             <div class="card">
                 <h2 class="card-title">Brand & Model</h2>
@@ -428,37 +497,33 @@
                 <h2 class="card-title">Tire Specifications</h2>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="largeur">Largeur (Width) <span class="required">*</span></label>
+                        <label for="largeur">Largeur <span class="required">*</span></label>
                         <input type="number" id="largeur" name="largeur" 
                                placeholder="225" min="100" max="400" required>
-                        <span class="help-text">Width in mm (e.g., 225)</span>
                     </div>
 
                     <div class="form-group">
-                        <label for="hauteur">Hauteur (Aspect Ratio) <span class="required">*</span></label>
+                        <label for="hauteur">Hauteur <span class="required">*</span></label>
                         <input type="number" id="hauteur" name="hauteur" 
                                placeholder="45" min="20" max="90" required>
-                        <span class="help-text">Profile in % (e.g., 45)</span>
                     </div>
 
                     <div class="form-group">
-                        <label for="rayon">Rayon (Rim Size) <span class="required">*</span></label>
+                        <label for="rayon">Rayon <span class="required">*</span></label>
                         <input type="number" id="rayon" name="rayon" 
                                placeholder="17" min="12" max="24" required>
-                        <span class="help-text">Rim diameter (e.g., 17)</span>
                     </div>
 
                     <div class="form-group">
                         <label for="load_index">Load Index <span class="required">*</span></label>
                         <input type="number" id="load_index" name="load_index" 
                                placeholder="91" min="60" max="130" required>
-                        <span class="help-text">e.g., 91</span>
                     </div>
 
                     <div class="form-group">
                         <label for="speed_index">Speed Index <span class="required">*</span></label>
                         <select id="speed_index" name="speed_index" required>
-                            <option value="">-- Select --</option>
+                            <option value="">--</option>
                             <option value="Q">Q</option>
                             <option value="R">R</option>
                             <option value="S">S</option>
@@ -476,14 +541,14 @@
                         <label for="dot_week">DOT <span class="required">*</span></label>
                         <div class="dot-group">
                             <select id="dot_week" name="dot_week" required>
-                                <option value="">Week</option>
+                                <option value="">Wk</option>
                                 {% for i in range(1, 53) %}
                                 <option value="{{ '%02d' % i }}">{{ '%02d' % i }}</option>
                                 {% endfor %}
                             </select>
                             <span class="dot-separator">/</span>
                             <select id="dot_year" name="dot_year" required>
-                                <option value="">Year</option>
+                                <option value="">Yr</option>
                                 <option value="25">25</option>
                                 <option value="24">24</option>
                                 <option value="23">23</option>
@@ -497,7 +562,6 @@
                                 <option value="15">15</option>
                             </select>
                         </div>
-                        <span class="help-text">Week / Year (e.g., 13 / 23)</span>
                         <input type="hidden" id="dot" name="dot">
                     </div>
 
@@ -527,10 +591,37 @@
                 </div>
             </div>
 
-            <!-- Used Tire Details -->
+            <!-- Pricing & Condition -->
             <div class="card">
-                <h2 class="card-title">Used Tire Details</h2>
+                <h2 class="card-title">Pricing & Condition</h2>
                 <div class="form-grid">
+                    <div class="form-group">
+                        <label for="price">Price <span class="required">*</span></label>
+                        <div class="input-group">
+                            <span class="input-prefix">€</span>
+                            <input type="number" id="price" name="price" required 
+                                   step="0.01" min="0" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tread_depth">Tread Depth (mm) <span class="required">*</span></label>
+                        <input type="number" id="tread_depth" name="tread_depth" 
+                               placeholder="8.26" step="0.01" min="0" max="15" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inventory_quantity">Inventory</label>
+                        <input type="number" id="inventory_quantity" name="inventory_quantity" 
+                               value="1" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="price_difference_to_new">Price Diff. to New (%)</label>
+                        <input type="number" id="price_difference_to_new" name="price_difference_to_new" 
+                               placeholder="30" min="1" max="100">
+                    </div>
+
                     <div class="form-group">
                         <label for="arrival_date">Arrival Date</label>
                         <input type="date" id="arrival_date" name="arrival_date">
@@ -541,49 +632,6 @@
                         <select id="item_condition" name="item_condition">
                             <option value="Occasion certifiée" selected>Occasion certifiée</option>
                         </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tread_depth">Tread Depth (mm) <span class="required">*</span></label>
-                        <input type="number" id="tread_depth" name="tread_depth" 
-                               placeholder="8.26" step="0.01" min="0" max="15" required>
-                        <span class="help-text">e.g., 8.26</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="price_difference_to_new">Price Difference to New (%)</label>
-                        <input type="number" id="price_difference_to_new" name="price_difference_to_new" 
-                               placeholder="30" min="1" max="100">
-                        <span class="help-text">1-100%</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pricing & Inventory -->
-            <div class="card">
-                <h2 class="card-title">Pricing & Inventory</h2>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="price">Price <span class="required">*</span></label>
-                        <div class="input-group">
-                            <span class="input-prefix">€</span>
-                            <input type="number" id="price" name="price" required 
-                                   step="0.01" min="0" placeholder="0.00">
-                        </div>
-                        <span class="help-text" id="price-helper">Enter used tire price</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="inventory_quantity">Inventory Quantity</label>
-                        <input type="number" id="inventory_quantity" name="inventory_quantity" 
-                               value="1" min="0">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="sku">SKU</label>
-                        <input type="text" id="sku" name="sku" 
-                               value="{{ next_sku }}" placeholder="e.g., 1139">
-                        <span class="help-text">Auto-suggested: next available SKU</span>
                     </div>
 
                     <div class="form-group">

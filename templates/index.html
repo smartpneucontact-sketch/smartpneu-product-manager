@@ -489,11 +489,8 @@
                                placeholder="Auto-generated from brand, model and specs">
                     </div>
 
-                    <div class="form-group full-width">
-                        <label for="description">Description</label>
-                        <textarea id="description" name="description" 
-                                  placeholder="Enter product description (HTML supported)">{{ default_description }}</textarea>
-                    </div>
+                    <!-- Hidden description field - auto-filled -->
+                    <input type="hidden" id="description" name="description" value="{{ default_description }}">
 
                     <div class="form-group">
                         <label for="product_type">Product Type <span class="required">*</span></label>
@@ -1533,6 +1530,10 @@
         document.getElementById('model').addEventListener('change', async function() {
             updateTitle();
             
+            // Clear previously selected collections when model changes
+            selectedCollections.clear();
+            renderCollectionTags();
+            
             // Fetch model details and auto-populate fields
             const brand = document.getElementById('brand').value;
             const model = this.value;
@@ -1588,55 +1589,9 @@
                             console.log('New tire reference price:', newTirePrice);
                             // Store in a data attribute for later calculation
                             document.getElementById('price').dataset.newPrice = newTirePrice;
-                            // Update helper text
-                            document.getElementById('price-helper').textContent = `New tire price: ${newTirePrice}€ - Enter used tire price`;
                         }
                         
-                        // Auto-add to collection based on brand
-                        if (brand) {
-                            console.log(`Auto-adding brand collection: ${brand}`);
-                            const collectionSelect = document.getElementById('collection_select');
-                            for (let i = 0; i < collectionSelect.options.length; i++) {
-                                const option = collectionSelect.options[i];
-                                if (option.dataset.title && option.dataset.title.toLowerCase() === brand.toLowerCase()) {
-                                    const collectionId = option.value;
-                                    if (collectionId && !selectedCollections.has(collectionId)) {
-                                        console.log(`Auto-adding to brand collection: ${brand} (ID: ${collectionId})`);
-                                        selectedCollections.set(collectionId, brand);
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        // Auto-add to collection based on tire type
-                        if (modelData.type) {
-                            const typeCollections = {
-                                'Ete': 'ÉTÉ',
-                                'Hiver': 'HIVER',
-                                '4 saisons': '4 SAISONS'
-                            };
-                            
-                            const typeCollectionName = typeCollections[modelData.type];
-                            if (typeCollectionName) {
-                                console.log(`Tire type is ${modelData.type}, looking for collection: ${typeCollectionName}`);
-                                
-                                const collectionSelect = document.getElementById('collection_select');
-                                for (let i = 0; i < collectionSelect.options.length; i++) {
-                                    const option = collectionSelect.options[i];
-                                    if (option.dataset.title && option.dataset.title.toLowerCase() === typeCollectionName.toLowerCase()) {
-                                        const collectionId = option.value;
-                                        if (collectionId && !selectedCollections.has(collectionId)) {
-                                            console.log(`Auto-adding to collection: ${typeCollectionName} (ID: ${collectionId})`);
-                                            selectedCollections.set(collectionId, typeCollectionName);
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Auto-add to collections based on boolean features
+                        // Auto-add to collections based on boolean features AND update toggle buttons
                         const featureCollections = {
                             '3pmsf': '3PMSF',
                             'runflat': 'RUNFLAT',
@@ -1647,23 +1602,48 @@
                         // Get all available collections
                         const collectionSelect = document.getElementById('collection_select');
                         
+                        // Helper function to add collection by name
+                        function addCollectionByName(collectionName) {
+                            for (let i = 0; i < collectionSelect.options.length; i++) {
+                                const option = collectionSelect.options[i];
+                                if (option.dataset.title && option.dataset.title.toLowerCase() === collectionName.toLowerCase()) {
+                                    const collectionId = option.value;
+                                    if (collectionId && !selectedCollections.has(collectionId)) {
+                                        console.log(`✅ Auto-adding collection: ${collectionName} (ID: ${collectionId})`);
+                                        selectedCollections.set(collectionId, option.dataset.title);
+                                        return true;
+                                    }
+                                    return false;
+                                }
+                            }
+                            console.log(`⚠️ Collection not found: ${collectionName}`);
+                            return false;
+                        }
+                        
+                        // Add brand collection
+                        if (brand) {
+                            addCollectionByName(brand);
+                        }
+                        
+                        // Add type collection
+                        if (modelData.type) {
+                            const typeCollections = {
+                                'Ete': 'ÉTÉ',
+                                'Hiver': 'HIVER',
+                                '4 saisons': '4 SAISONS'
+                            };
+                            const typeCollectionName = typeCollections[modelData.type];
+                            if (typeCollectionName) {
+                                addCollectionByName(typeCollectionName);
+                            }
+                        }
+                        
+                        // Add feature collections based on model data
                         Object.keys(featureCollections).forEach(feature => {
+                            console.log(`Checking feature ${feature}: ${modelData[feature]} (type: ${typeof modelData[feature]})`);
                             if (modelData[feature] === true) {
                                 const collectionName = featureCollections[feature];
-                                console.log(`Feature ${feature} is true, looking for collection: ${collectionName}`);
-                                
-                                // Find matching collection in dropdown
-                                for (let i = 0; i < collectionSelect.options.length; i++) {
-                                    const option = collectionSelect.options[i];
-                                    if (option.dataset.title && option.dataset.title.toLowerCase() === collectionName.toLowerCase()) {
-                                        const collectionId = option.value;
-                                        if (collectionId && !selectedCollections.has(collectionId)) {
-                                            console.log(`Auto-adding to collection: ${collectionName} (ID: ${collectionId})`);
-                                            selectedCollections.set(collectionId, collectionName);
-                                        }
-                                        break;
-                                    }
-                                }
+                                addCollectionByName(collectionName);
                             }
                         });
                         

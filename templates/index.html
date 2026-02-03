@@ -123,6 +123,57 @@
             opacity: 0.9;
         }
 
+        .btn-sku-check {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .btn-sku-check:hover {
+            background: rgba(255,255,255,0.35);
+        }
+        .btn-sku-check:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .sku-status {
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .sku-status.sku-ok {
+            color: #bbf7d0;
+        }
+        .sku-status.sku-error {
+            color: #fef08a;
+        }
+
+        .sku-error-banner {
+            background: #fef2f2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
         .form-group {
             display: flex;
             flex-direction: column;
@@ -448,12 +499,14 @@
             {% endif %}
         {% endwith %}
 
-        <form action="/create-product" method="POST" enctype="multipart/form-data">
+        <form action="/create-product" method="POST" enctype="multipart/form-data" id="productForm" onsubmit="return handleFormSubmit(event)">
             <!-- SKU Bar - Top of form for easy access -->
             <div class="sku-bar">
                 <label for="sku">📦 SKU:</label>
-                <input type="text" id="sku" name="sku" value="{{ next_sku }}" placeholder="1139">
-                <span class="sku-hint">Next available: {{ next_sku }}</span>
+                <input type="text" id="sku" name="sku" value="{{ next_sku }}" placeholder="1139" oninput="resetSkuValidation()">
+                <button type="button" class="btn-sku-check" id="skuCheckBtn" onclick="checkSkuAvailability()" title="Verify SKU availability">🔍 Check</button>
+                <span class="sku-hint" id="skuHint">Next available: {{ next_sku }}</span>
+                <span class="sku-status" id="skuStatus"></span>
             </div>
 
             <!-- Brand & Model Selection -->
@@ -1090,6 +1143,139 @@
     </div>
 
     <script>
+        // ============================================================
+        // SKU VALIDATION
+        // ============================================================
+        
+        let skuValidated = false;
+        
+        function resetSkuValidation() {
+            skuValidated = false;
+            const status = document.getElementById('skuStatus');
+            status.textContent = '';
+            status.className = 'sku-status';
+            // Remove any error banner
+            const banner = document.getElementById('skuErrorBanner');
+            if (banner) banner.remove();
+        }
+        
+        async function checkSkuAvailability() {
+            const skuInput = document.getElementById('sku');
+            const sku = skuInput.value.trim();
+            const status = document.getElementById('skuStatus');
+            const checkBtn = document.getElementById('skuCheckBtn');
+            
+            if (!sku) {
+                status.textContent = '⚠️ Enter a SKU first';
+                status.className = 'sku-status sku-error';
+                return false;
+            }
+            
+            checkBtn.disabled = true;
+            checkBtn.textContent = '⏳ Checking...';
+            status.textContent = '';
+            
+            try {
+                const response = await fetch('/check-sku', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sku: sku })
+                });
+                const data = await response.json();
+                
+                if (data.available) {
+                    status.textContent = '✅ Available';
+                    status.className = 'sku-status sku-ok';
+                    skuValidated = true;
+                    // Remove any error banner
+                    const banner = document.getElementById('skuErrorBanner');
+                    if (banner) banner.remove();
+                    return true;
+                } else {
+                    status.textContent = '❌ ' + data.error;
+                    status.className = 'sku-status sku-error';
+                    skuValidated = false;
+                    return false;
+                }
+            } catch (err) {
+                status.textContent = '⚠️ Could not verify SKU';
+                status.className = 'sku-status sku-error';
+                skuValidated = false;
+                return false;
+            } finally {
+                checkBtn.disabled = false;
+                checkBtn.textContent = '🔍 Check';
+            }
+        }
+        
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const sku = document.getElementById('sku').value.trim();
+            const form = document.getElementById('productForm');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            // Remove any existing error banner
+            const existingBanner = document.getElementById('skuErrorBanner');
+            if (existingBanner) existingBanner.remove();
+            
+            if (!sku) {
+                // No SKU entered — show error
+                showSkuError('Please enter a SKU before creating the product.');
+                return false;
+            }
+            
+            // Disable submit button during check
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Verifying SKU...';
+            
+            try {
+                const response = await fetch('/check-sku', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sku: sku })
+                });
+                const data = await response.json();
+                
+                if (!data.available) {
+                    showSkuError(data.error || 'This SKU is already in use.');
+                    document.getElementById('skuStatus').textContent = '❌ Already in use';
+                    document.getElementById('skuStatus').className = 'sku-status sku-error';
+                    document.getElementById('sku').focus();
+                    return false;
+                }
+                
+                // SKU is available — submit the form normally
+                submitBtn.textContent = '🚀 Creating Product...';
+                form.submit();
+                
+            } catch (err) {
+                showSkuError('Could not verify SKU availability. Please try again.');
+                return false;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Product';
+            }
+            
+            return false;
+        }
+        
+        function showSkuError(message) {
+            const existingBanner = document.getElementById('skuErrorBanner');
+            if (existingBanner) existingBanner.remove();
+            
+            const banner = document.createElement('div');
+            banner.id = 'skuErrorBanner';
+            banner.className = 'sku-error-banner';
+            banner.innerHTML = '⚠️ ' + message;
+            
+            const form = document.getElementById('productForm');
+            form.insertBefore(banner, form.firstChild);
+            
+            // Scroll to top to see error
+            banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
         // ============================================================
         // LABEL MANAGEMENT TOGGLE
         // ============================================================

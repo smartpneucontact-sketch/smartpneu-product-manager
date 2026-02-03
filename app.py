@@ -411,6 +411,57 @@ def get_model_details(brand, model):
             'error': str(e)
         }), 500
 
+@app.route('/check-sku', methods=['POST'])
+def check_sku():
+    """Check if a SKU already exists in Shopify"""
+    sku_to_check = request.json.get('sku', '').strip()
+    if not sku_to_check:
+        return jsonify({'available': False, 'error': 'SKU is empty'})
+    
+    try:
+        session = shopify.Session(SHOP_URL, "2023-04", SHOPIFY_ACCESS_TOKEN)
+        shopify.ShopifyResource.activate_session(session)
+        
+        # Use GraphQL for efficient SKU search
+        query = '''
+        {
+            productVariants(first: 1, query: "sku:%s") {
+                edges {
+                    node {
+                        sku
+                        product {
+                            title
+                            id
+                        }
+                    }
+                }
+            }
+        }
+        ''' % sku_to_check.replace('"', '\\"')
+        
+        result = shopify.GraphQL().execute(query)
+        import json as json_module
+        data = json_module.loads(result)
+        
+        edges = data.get('data', {}).get('productVariants', {}).get('edges', [])
+        
+        # Check for exact match (GraphQL query might return partial matches)
+        for edge in edges:
+            existing_sku = edge['node'].get('sku', '')
+            if existing_sku == sku_to_check:
+                product_title = edge['node']['product']['title']
+                return jsonify({
+                    'available': False, 
+                    'error': f'SKU "{sku_to_check}" is already used by product: {product_title}'
+                })
+        
+        return jsonify({'available': True})
+        
+    except Exception as e:
+        print(f"❌ Error checking SKU: {e}")
+        return jsonify({'available': False, 'error': f'Error checking SKU: {str(e)}'})
+
+
 @app.route('/create-product', methods=['POST'])
 def create_product():
     """Create a new product in Shopify and optionally print label"""
@@ -418,6 +469,35 @@ def create_product():
     session = shopify.Session(SHOP_URL, "2023-04", SHOPIFY_ACCESS_TOKEN)
     shopify.ShopifyResource.activate_session(session)
     try:
+        # ── SKU duplicate check (server-side safety net) ──
+        sku_value = request.form.get('sku', '').strip()
+        if sku_value:
+            try:
+                query = '''
+                {
+                    productVariants(first: 1, query: "sku:%s") {
+                        edges {
+                            node {
+                                sku
+                                product { title }
+                            }
+                        }
+                    }
+                }
+                ''' % sku_value.replace('"', '\\"')
+                result = shopify.GraphQL().execute(query)
+                import json as json_module
+                sku_data = json_module.loads(result)
+                for edge in sku_data.get('data', {}).get('productVariants', {}).get('edges', []):
+                    if edge['node'].get('sku', '') == sku_value:
+                        product_title = edge['node']['product']['title']
+                        return jsonify({
+                            'success': False,
+                            'error': f'SKU "{sku_value}" is already used by product: {product_title}'
+                        })
+            except Exception as sku_err:
+                print(f"⚠️ SKU check warning (continuing): {sku_err}")
+
         # Get form data - include ALL fields
         product_data = {
             'title': request.form.get('title'),

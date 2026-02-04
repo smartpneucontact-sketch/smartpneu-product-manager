@@ -56,7 +56,7 @@ HTML_TEMPLATE = """
 <head>
     <title>SmartPneu Labels</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="refresh" content="10">
+    <!-- Auto-refresh handled by JS (pauses when edit modal is open) -->
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -453,15 +453,25 @@ HTML_TEMPLATE = """
             btn.textContent = '💾 Save & Regenerate';
         }
         
-        // Close modal on backdrop click
-        document.getElementById('editModal').addEventListener('click', function(e) {
-            if (e.target === this) closeEditModal();
+        // Close modal on backdrop click (attached after DOM load)
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('editModal').addEventListener('click', function(e) {
+                if (e.target === this) closeEditModal();
+            });
         });
         
         // Close on Escape
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') closeEditModal();
         });
+        
+        // Smart auto-refresh: pauses when edit modal is open
+        setInterval(function() {
+            const modal = document.getElementById('editModal');
+            if (!modal || modal.style.display === 'none' || modal.style.display === '') {
+                location.reload();
+            }
+        }, 10000);
     </script>
     
     <!-- Edit Modal -->

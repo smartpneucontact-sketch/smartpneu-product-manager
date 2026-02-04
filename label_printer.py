@@ -63,58 +63,55 @@ class TireLabelPrinter:
         
         # Color scheme based on mode
         if self.black_and_white:
-            header_bg = HexColor("#000000")  # Black header
-            accent_color = HexColor("#000000")  # Black accents
-            border_color = HexColor("#333333")  # Dark gray border
+            header_bg = HexColor("#000000")
+            accent_color = HexColor("#000000")
+            border_color = HexColor("#333333")
         else:
-            header_bg = HexColor("#CC0000")  # Red header
-            accent_color = HexColor("#CC0000")  # Red accents
-            border_color = HexColor("#0099CC")  # Blue border
+            header_bg = HexColor("#CC0000")
+            accent_color = HexColor("#CC0000")
+            border_color = HexColor("#0099CC")
         
         # Header - White background for logo visibility
         c.setFillColor(HexColor("#FFFFFF"))
-        c.rect(0, self.height - 35*mm, self.width, 35*mm, fill=True, stroke=False)
+        c.rect(0, self.height - 30*mm, self.width, 30*mm, fill=True, stroke=False)
         
         # Draw the SmartPneu logo
         try:
             if os.path.exists(self.logo_path):
-                # Logo dimensions - scale to fit nicely in header
                 logo_width = 100 * mm
                 logo_height = 20 * mm
-                logo_x = (self.width - logo_width) / 2  # Center horizontally
-                logo_y = self.height - 28 * mm  # Position in header
+                logo_x = (self.width - logo_width) / 2
+                logo_y = self.height - 24 * mm
                 
                 c.drawImage(self.logo_path, logo_x, logo_y, 
                            width=logo_width, height=logo_height,
                            preserveAspectRatio=True, mask='auto')
             else:
-                # Fallback to text if logo not found
                 c.setFillColor(HexColor("#CF343B"))
                 c.setFont("Helvetica-Bold", 18)
-                c.drawCentredString(self.width / 2, self.height - 20*mm, "smartpneu.com")
+                c.drawCentredString(self.width / 2, self.height - 18*mm, "smartpneu.com")
         except Exception as e:
             print(f"⚠️ Logo error: {e}")
             c.setFillColor(HexColor("#CF343B"))
             c.setFont("Helvetica-Bold", 18)
-            c.drawCentredString(self.width / 2, self.height - 20*mm, "smartpneu.com")
+            c.drawCentredString(self.width / 2, self.height - 18*mm, "smartpneu.com")
         
         # Tagline below logo
         c.setFillColor(HexColor("#666666"))
-        c.setFont("Helvetica", 9)
-        c.drawCentredString(self.width / 2, self.height - 32*mm, "Pneus d'occasion certifiés à prix imbattables")
+        c.setFont("Helvetica", 7)
+        c.drawCentredString(self.width / 2, self.height - 28*mm, "Pneus d'occasion certifiés à prix imbattables")
         
         # Body - White background
         c.setFillColor(HexColor("#FFFFFF"))
-        c.rect(0, 0, self.width, self.height - 35*mm, fill=True, stroke=False)
+        c.rect(0, 0, self.width, self.height - 30*mm, fill=True, stroke=False)
         
         # Border
         c.setStrokeColor(border_color)
         c.setLineWidth(2)
-        c.rect(2*mm, 2*mm, self.width - 4*mm, self.height - 37*mm, fill=False, stroke=True)
+        c.rect(2*mm, 2*mm, self.width - 4*mm, self.height - 32*mm, fill=False, stroke=True)
         
-        # Product information - italic labels with big bold values
-        y_position = self.height - 46*mm
-        line_height = 16*mm  # Compact spacing for all fields to fit
+        # ── Product information ──
+        y_position = self.height - 38*mm
         
         # Format dimensions properly
         rayon = product_data.get('rayon', '').replace('R', '').replace('r', '')
@@ -133,52 +130,56 @@ class TireLabelPrinter:
             ("Profondeur", product_data.get('profondeur', '—')),
         ]
         
+        label_font_size = 10
+        big_value_font_size = 26
+        dimensions_font_size = 48
+        ref_font_size = 42
+        
         for label, value in fields:
-            # Label in italic, small, gray
+            # Label in italic, gray
             c.setFillColor(HexColor("#666666"))
-            c.setFont("Helvetica-Oblique", 8)
-            c.drawString(8*mm, y_position + 4*mm, label)
+            c.setFont("Helvetica-Oblique", label_font_size)
+            c.drawString(8*mm, y_position + 2*mm, label)
             
-            # Value in bold, black - EXTRA BIG for Dimensions and Réf
+            # Value in bold, black
             c.setFillColor(HexColor("#000000"))
             if label == "Dimensions":
-                c.setFont("Helvetica-Bold", 42)
-                c.drawString(8*mm, y_position - 10*mm, str(value) if value else "—")
-                y_position -= line_height + 12*mm
+                c.setFont("Helvetica-Bold", dimensions_font_size)
+                c.drawString(8*mm, y_position - 14*mm, str(value) if value else "—")
+                y_position -= 30*mm
             elif label == "Réf":
-                c.setFont("Helvetica-Bold", 38)
-                c.drawString(8*mm, y_position - 9*mm, str(value) if value else "—")
-                y_position -= line_height + 10*mm
+                c.setFont("Helvetica-Bold", ref_font_size)
+                c.drawString(8*mm, y_position - 12*mm, str(value) if value else "—")
+                y_position -= 28*mm
             else:
-                c.setFont("Helvetica-Bold", 18)
-                c.drawString(8*mm, y_position - 4*mm, str(value) if value else "—")
-                y_position -= line_height
+                c.setFont("Helvetica-Bold", big_value_font_size)
+                c.drawString(8*mm, y_position - 7*mm, str(value) if value else "—")
+                y_position -= 18*mm
         
-        # QR Code - use branded image, positioned on the right
-        qr_size = 38*mm
+        # QR Code - branded image, bottom right
+        qr_size = 30*mm
         try:
             if os.path.exists(self.qr_code_path):
                 c.drawImage(self.qr_code_path, 
-                           self.width - qr_size - 8*mm,  # Right aligned with margin
-                           10*mm,
+                           self.width - qr_size - 6*mm,
+                           6*mm,
                            width=qr_size, 
                            height=qr_size,
                            preserveAspectRatio=True,
                            mask='auto')
             else:
-                # Fallback to generated QR if branded one not found
                 qr_image = self.generate_qr_code(product_data.get('product_url', 'https://smartpneu.com'))
                 c.drawImage(qr_image, 
-                           self.width - qr_size - 8*mm,
-                           10*mm,
+                           self.width - qr_size - 6*mm,
+                           6*mm,
                            width=qr_size, 
                            height=qr_size)
         except Exception as e:
             print(f"⚠️ QR code error: {e}")
         
-        # Phone number at bottom right, below QR code
-        c.setFont("Helvetica-Bold", 18)
-        c.drawRightString(self.width - 8*mm, 4*mm, "Tel : 09 70 70 71 36")
+        # Phone number at bottom left
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(8*mm, 8*mm, "Tel : 09 70 70 71 36")
         
         c.save()
         return output_path

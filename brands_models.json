@@ -1266,6 +1266,17 @@
                     "runflat": false,
                     "protection_jante": false,
                     "renforce": true
+                },
+                {
+                    "name": "EfficientGrip",
+                    "type": "Ete",
+                    "speed_index": "H",
+                    "load_index": "89",
+                    "price": "1",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": false,
+                    "renforce": true
                 }
             ]
         },

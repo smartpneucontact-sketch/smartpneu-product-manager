@@ -1299,6 +1299,17 @@
                     "runflat": false,
                     "protection_jante": true,
                     "renforce": true
+                },
+                {
+                    "name": "Eagle F1 AT",
+                    "type": "Ete",
+                    "speed_index": "W",
+                    "load_index": "104",
+                    "price": "200",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": true,
+                    "renforce": true
                 }
             ]
         },

@@ -1722,6 +1722,17 @@
                     "runflat": false,
                     "protection_jante": false,
                     "renforce": true
+                },
+                {
+                    "name": "Turanza Eco",
+                    "type": "Ete",
+                    "speed_index": "T",
+                    "load_index": "101",
+                    "price": "1",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": true,
+                    "renforce": true
                 }
             ]
         },

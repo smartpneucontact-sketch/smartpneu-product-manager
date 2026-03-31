@@ -953,6 +953,17 @@
                     "runflat": false,
                     "protection_jante": true,
                     "renforce": true
+                },
+                {
+                    "name": "CrossContact",
+                    "type": "Ete",
+                    "speed_index": "W",
+                    "load_index": "105",
+                    "price": "200",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": true,
+                    "renforce": false
                 }
             ]
         },

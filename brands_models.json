@@ -1277,6 +1277,17 @@
                     "runflat": false,
                     "protection_jante": false,
                     "renforce": true
+                },
+                {
+                    "name": "Cargo Marathon",
+                    "type": "Ete",
+                    "speed_index": "T",
+                    "load_index": "106/104",
+                    "price": "200",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": true,
+                    "renforce": true
                 }
             ]
         },

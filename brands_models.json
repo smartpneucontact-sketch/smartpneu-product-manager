@@ -4648,6 +4648,22 @@
                     "renforce": true
                 }
             ]
+        },
+        {
+            "name": "Semperit",
+            "models": [
+                {
+                    "name": "Speed-Grip 3",
+                    "type": "Ete",
+                    "speed_index": "T",
+                    "load_index": "87",
+                    "price": "",
+                    "3pmsf": false,
+                    "runflat": false,
+                    "protection_jante": true,
+                    "renforce": true
+                }
+            ]
         }
     ]
 }

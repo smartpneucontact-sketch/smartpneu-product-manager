@@ -2,12 +2,77 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for
 import shopify
 import os
 import json
+import urllib.request
+import urllib.error
+import urllib.parse
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from label_printer import TireLabelPrinter
 
 # Load environment variables
 load_dotenv()
+
+# SmartPneu Database API config
+DATABASE_API_URL = os.environ.get("DATABASE_API_URL", "")  # e.g. https://smartpneu-database.up.railway.app
+DATABASE_API_KEY = os.environ.get("DATABASE_API_KEY", "")
+
+
+def fetch_tire_database():
+    """
+    Fetch tire database from the SmartPneu Database API.
+    Falls back to local brands_models.json if the API is unavailable.
+    """
+    if DATABASE_API_URL and DATABASE_API_KEY:
+        try:
+            url = f"{DATABASE_API_URL.rstrip('/')}/api/live-database"
+            req = urllib.request.Request(url)
+            req.add_header("X-API-Key", DATABASE_API_KEY)
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            if "brands" in data:
+                print(f"✅ Loaded database from SmartPneu Database API: {len(data['brands'])} brands")
+                return data
+        except Exception as e:
+            print(f"⚠️ Could not reach SmartPneu Database API: {e}")
+            print("   Falling back to local brands_models.json")
+
+    # Fallback: local file
+    try:
+        with open("brands_models.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
+        print(f"📁 Loaded database from local file: {len(data.get('brands', []))} brands")
+        return data
+    except FileNotFoundError:
+        print("❌ No database available (API unreachable, no local file)")
+        return {"brands": []}
+
+
+def fetch_model_details(brand, model):
+    """Fetch model details from API, fallback to local file."""
+    if DATABASE_API_URL and DATABASE_API_KEY:
+        try:
+            url = f"{DATABASE_API_URL.rstrip('/')}/api/live-database/model-details/{urllib.parse.quote(brand)}/{urllib.parse.quote(model)}"
+            req = urllib.request.Request(url)
+            req.add_header("X-API-Key", DATABASE_API_KEY)
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+            if result.get("success"):
+                return result["model"]
+        except Exception as e:
+            print(f"⚠️ API model lookup failed: {e}, falling back to local file")
+
+    # Fallback: local file
+    try:
+        with open("brands_models.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for brand_data in data["brands"]:
+            if brand_data["name"] == brand:
+                for model_data in brand_data["models"]:
+                    if model_data["name"] == model:
+                        return model_data
+    except Exception:
+        pass
+    return None
 
 
 # ============================================================
@@ -283,23 +348,22 @@ def index():
             'error': str(e)
         }
     
-    # Load brands and models from JSON file
+    # Load brands and models from SmartPneu Database API (fallback to local file)
     try:
-        with open('brands_models.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            
+        db_data = fetch_tire_database()
+
         brands_models = {}
         full_tire_data = {}
-        
-        if 'brands' in data:
-            for brand in data['brands']:
+
+        if 'brands' in db_data:
+            for brand in db_data['brands']:
                 brand_name = brand['name']
                 brands_models[brand_name] = [model['name'] for model in brand['models']]
                 full_tire_data[brand_name] = brand['models']
         else:
-            brands_models = data
-            
-    except FileNotFoundError:
+            brands_models = db_data
+
+    except Exception:
         brands_models = {}
         full_tire_data = {}
     
@@ -384,27 +448,20 @@ def test_connection():
 
 @app.route('/api/model-details/<brand>/<model>')
 def get_model_details(brand, model):
-    """Get detailed tire model information"""
+    """Get detailed tire model information from SmartPneu Database API"""
     try:
-        with open('brands_models.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        
-        # Find the brand
-        for brand_data in data['brands']:
-            if brand_data['name'] == brand:
-                # Find the model
-                for model_data in brand_data['models']:
-                    if model_data['name'] == model:
-                        return jsonify({
-                            'success': True,
-                            'model': model_data
-                        })
-        
+        model_data = fetch_model_details(brand, model)
+        if model_data:
+            return jsonify({
+                'success': True,
+                'model': model_data
+            })
+
         return jsonify({
             'success': False,
             'error': 'Model not found'
         }), 404
-        
+
     except Exception as e:
         return jsonify({
             'success': False,
